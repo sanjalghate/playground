@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Print Input Text</title>
+</head>
+<body>
+  <input type="text" id="textInput" placeholder="Enter text here">
+  <button onclick="printText()">Print</button>
+
+  <div id="output" style="margin-top:10px;"></div>
+
+  <script>
+    function printText() {
+      const input = document.getElementById("textInput").value;
+      if (input.trim() !== "") {
+        const outputDiv = document.getElementById("output");
+        const newLine = document.createElement("div");
+        newLine.textContent = input;
+        outputDiv.appendChild(newLine);
+        document.getElementById("textInput").value = ""; // clear input
+      }
+    }
+  </script>
+</body>
+</html>

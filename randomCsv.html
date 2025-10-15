@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic CSV Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f5f5f5;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Dynamic CSV Generator</h2>
+  <button id="generateCsvBtn">Generate & Download CSV</button>
+
+  <script>
+    function generateRandomData() {
+      const rows = [];
+      const numRows = Math.floor(Math.random() * 10) + 3; // between 3–12 rows
+      const headers = ["id", "name", "email", "age"];
+      rows.push(headers.join(","));
+
+      for (let i = 1; i <= numRows; i++) {
+        const name = `User_${Math.floor(Math.random() * 1000)}`;
+        const email = `${name.toLowerCase()}@example.com`;
+        const age = Math.floor(Math.random() * 50) + 18;
+        rows.push(`${i},${name},${email},${age}`);
+      }
+
+      return rows.join("\n");
+    }
+
+    function downloadCSV(content, filename) {
+      const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    document.getElementById("generateCsvBtn").addEventListener("click", () => {
+      const csvData = generateRandomData();
+      const fileName = `data_${Date.now()}.csv`; // unique file name
+      downloadCSV(csvData, fileName);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CSV Download</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+      background: #f5f7fa;
+      margin: 0;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(37,99,235,0.16);
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+  <button id="csv1">Download CSV 1 (Metrics)</button>
+  <button id="csv2">Download CSV 2 (Colors)</button>
+  <button id="csv3">Download CSV 3 (People)</button>
+  <button id="csv4">Download CSV 4 (Links)</button>
+
+  <script>
+    function downloadCSV(filename, rows) {
+      const bom = '\uFEFF'; // UTF-8 BOM
+      const csvContent = rows.join('\r\n');
+      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    document.getElementById('csv1').addEventListener('click', function () {
+      const rows = [
+        'metric_category,name,keywords,frequency,examples',
+        'byTopic,customer,"amaze customer,customer service",1,"Amazing customer service.,Amazing customer service."',
+        'byTopic,doc,"qa doc,doc httpsagentiqqaeassets.s3.amazonaws.comprivate20252209175635sflqszv2_test.pdf",2,"QA Doc,Doc https://agentiq-qae-assets.s3.amazonaws.com/private/2025-22-09-17-56-35/SFlqsZV2_Test.pdf"',
+        'byTopic,image,"image httpsagentiqqaeassets.s3.amazonaws.comprivate20252209174142r2dooyhb_aiq20symbol.png,image httpsagentiqqaeassets.s3.amazonaws.comprivate20252209175620ynlpnjod_aiq20symbol.png",1,"Image https://agentiq-qae-assets.s3.amazonaws.com/private/2025-22-09-17-41-42/r2dOOyhB_AIQ%20Symbol.png,Image https://agentiq-qae-assets.s3.amazonaws.com/private/2025-22-09-17-56-20/YNLpNJoD_AIQ%20Symbol.png"',
+        'byTopic,misc,"show timer,demo4 qae,dont want,sound great,test message,agent iq,chand banker,ssn xxxxx7317,number xxxxxxxxxxxx1112,awesome product,time get,show timer",274,"Show me timer,Is this demo4 or qae?,I dont want,that sounds great,Test Message,Agent IQ,chand banker,SSN: xxx-xx-7317,Credit Card Number - xxxxxxxxxxxx1112,Awesome product.,why last chat time is not getting updated?,show timer"'
+      ];
+      downloadCSV('metrics.csv', rows);
+    });
+
+    document.getElementById('csv2').addEventListener('click', function () {
+      const rows = [
+        'color,commaVal',
+        'pink,"11,text"',
+        'blue,"22, text"',
+        'purple,"33, texttt"'
+      ];
+      downloadCSV('colors.csv', rows);
+    });
+
+    document.getElementById('csv3').addEventListener('click', function () {
+      const rows = [
+        'Name,Age,City',
+        'John,25,NYC',
+        'Jane,30         ',
+        'Bob              '
+      ];
+      downloadCSV('people.csv', rows);
+    });
+
+    document.getElementById('csv4').addEventListener('click', function () {
+      const rows = [
+        'url,name,age',
+        'https://sandbox.mabl.com/,idkk,11',
+        'https://sandbox.mabl.com/,what,1'
+      ];
+      downloadCSV('links.csv', rows);
+    });
+  </script>
+</body>
+</html>
