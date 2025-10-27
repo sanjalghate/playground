@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chrome Pop-ups Demo</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f7fa;
+      gap: 14px;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+      transition: 0.2s;
+    }
+    button:hover { background: #0059d6; }
+    h1 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Chrome Pop-ups Demo</h1>
+
+  <button onclick="showAlert()">Show Alert</button>
+  <button onclick="showConfirm()">Show Confirm</button>
+  <button onclick="showPrompt()">Show Prompt</button>
+  <button onclick="openFilePicker()">Open File Picker</button>
+  <button onclick="requestNotification()">Request Notification Permission</button>
+  <button onclick="requestLocation()">Request Geolocation Permission</button>
+
+  <input type="file" id="fileInput" style="display:none">
+
+  <script>
+    function showAlert() {
+      alert("This is Chrome's native alert box!");
+    }
+
+    function showConfirm() {
+      const res = confirm("Do you want to continue?");
+      alert("You clicked: " + (res ? "OK" : "Cancel"));
+    }
+
+    function showPrompt() {
+      const name = prompt("Enter your name:");
+      alert("Hello " + (name || "anonymous") + "!");
+    }
+
+    function openFilePicker() {
+      document.getElementById("fileInput").click();
+    }
+
+    function requestNotification() {
+      if (!("Notification" in window)) {
+        alert("This browser does not support notifications.");
+        return;
+      }
+      Notification.requestPermission().then(result => {
+        alert("Notification permission: " + result);
+      });
+    }
+
+    function requestLocation() {
+      if (!("geolocation" in navigator)) {
+        alert("Geolocation not supported!");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => alert("Got your location! Lat: " + pos.coords.latitude.toFixed(4) + ", Lon: " + pos.coords.longitude.toFixed(4)),
+        err => alert("Error: " + err.message)
+      );
+    }
+  </script>
+</body>
+</html>
