@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Trigger Chrome "Save Card" Prompt</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px; max-width: 700px; margin: auto; }
+    .card { padding: 18px; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    label { display:block; margin-top: 10px; font-size: 14px; }
+    input { width:100%; padding:10px; margin-top:6px; font-size:16px; border:1px solid #ddd; border-radius:6px; }
+    .row { display:flex; gap:12px; }
+    .row input { flex:1; }
+    button { margin-top:16px; padding:10px 14px; font-size:16px; border-radius:8px; cursor:pointer; }
+    .muted { color:#666; font-size:13px; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <h2>Save Card Prompt Demo</h2>
+  <div class="card">
+    <form id="cardForm" action="#" method="POST" autocomplete="on" novalidate>
+      <label for="name">Name on card</label>
+      <input id="name" name="cc-name" autocomplete="cc-name" placeholder="Full name" />
+
+      <label for="number">Card number</label>
+      <input id="number" name="cc-number" inputmode="numeric" autocomplete="cc-number" placeholder="4111 1111 1111 1111" />
+
+      <div class="row">
+        <div style="flex:1">
+          <label for="exp">Expiration (MM/YY)</label>
+          <input id="exp" name="cc-exp" autocomplete="cc-exp" placeholder="MM/YY" />
+        </div>
+        <div style="width:120px">
+          <label for="cvc">CVC</label>
+          <input id="cvc" name="cc-csc" autocomplete="cc-csc" inputmode="numeric" placeholder="123" />
+        </div>
+      </div>
+
+      <label for="email">Email (optional)</label>
+      <input id="email" name="email" autocomplete="email" placeholder="you@example.com" />
+
+      <button id="manualSubmit" type="submit">Submit (manual)</button>
+      <button id="autoSubmit" type="button">Fill & Submit (trigger)</button>
+
+      <p class="muted">
+        Note: Chrome decides when to show the "Save card" prompt. Usually it appears when a user-submitted form contains real-looking card fields with correct autocomplete attributes.
+      </p>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('cardForm');
+    const autoBtn = document.getElementById('autoSubmit');
+
+    // Prevent default submission from navigating away in this demo.
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Simulate form processing and a network request outcome.
+      console.log('Form submitted:', {
+        name: form['cc-name'].value,
+        number: form['cc-number'].value,
+        exp: form['cc-exp'].value,
+        cvc: form['cc-csc'].value,
+        email: form['email'].value
+      });
+      // Show a message to user
+      alert('Form submitted — check if Chrome offered to save the card.');
+    });
+
+    // Utility to dispatch input events to mimic user typing (improves chance browser treats fields as user-entered)
+    function setValueLikeUser(el, value, delay = 40) {
+      el.focus();
+      el.value = '';
+      return new Promise((resolve) => {
+        let i = 0;
+        function step() {
+          if (i <= value.length) {
+            el.value = value.slice(0, i);
+            const ev = new Event('input', { bubbles: true });
+            el.dispatchEvent(ev);
+            i++;
+            setTimeout(step, delay);
+          } else {
+            el.blur();
+            resolve();
+          }
+        }
+        step();
+      });
+    }
+
+    autoBtn.addEventListener('click', async () => {
+      // Use common test card number (Visa) — do NOT use real card numbers here.
+      const testData = {
+        'cc-name': 'Test User',
+        'cc-number': '4111111111111111', // Visa test card
+        'cc-exp': '12/30',
+        'cc-csc': '123',
+        'email': 'test@example.com'
+      };
+
+      // Fill fields like a user (helps some heuristics)
+      await setValueLikeUser(form['cc-name'], testData['cc-name']);
+      await setValueLikeUser(form['cc-number'], testData['cc-number']);
+      await setValueLikeUser(form['cc-exp'], testData['cc-exp']);
+      await setValueLikeUser(form['cc-csc'], testData['cc-csc']);
+      await setValueLikeUser(form['email'], testData['email']);
+
+      // Small delay then submit
+      setTimeout(() => {
+        // Real user click is best — create and click a submit button
+        const submitBtn = document.getElementById('manualSubmit');
+        submitBtn.click();
+      }, 250);
+    });
+  </script>
+</body>
+</html>
