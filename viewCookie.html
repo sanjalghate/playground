@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cookie Inspector</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 24px; background:#f6f7fb; color:#111; }
+    h1 { margin:0 0 12px 0; font-size:24px; }
+    .controls { margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; }
+    button { padding:8px 12px; border-radius:8px; border:1px solid #d0d3df; background:#fff; cursor:pointer; font-weight:600; }
+    button.negative { background:#fff0f0; border-color:#f3c2c2; }
+    table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(20,20,40,0.04); }
+    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid #f0f1f6; vertical-align:middle; font-size:13px; }
+    th { background:#fbfbfe; font-weight:700; color:#333; }
+    td.value { max-width:45ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
+    .small { font-size:12px; color:#666; }
+    .actions { display:flex; gap:6px; }
+    input[type="text"] { padding:8px; border-radius:8px; border:1px solid #ddd; min-width:220px; }
+    .notice { margin-top:12px; font-size:13px; color:#444; }
+    .inline { display:inline-block; vertical-align:middle; }
+  </style>
+</head>
+<body>
+  <h1>Cookie Inspector</h1>
+  <div class="controls">
+    <button id="refreshBtn">Refresh</button>
+    <button id="exportBtn">Export JSON</button>
+    <button id="deleteAllBtn" class="negative">Delete All (best-effort)</button>
+
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+      <input id="setName" type="text" placeholder="Cookie name" />
+      <input id="setValue" type="text" placeholder="Cookie value" />
+      <button id="setCookieBtn">Set Cookie (path=/)</button>
+    </div>
+  </div>
+
+  <table id="cookiesTable" aria-live="polite">
+    <thead>
+      <tr><th style="width:26%;">Name</th><th style="width:58%;">Value</th><th style="width:16%;">Actions</th></tr>
+    </thead>
+    <tbody id="cookiesBody">
+      <!-- filled by JS -->
+    </tbody>
+  </table>
+
+  <div class="notice">
+    <div class="small">
+      JS reads only non-HttpOnly cookies from <code>document.cookie</code>. Domain/path/HTTP-only/secure flags are not exposed to JavaScript.
+      "Delete" attempts to remove the cookie by setting it expired at path=/ (may fail if cookie was set with a different path or domain).
+    </div>
+  </div>
+
+  <script>
+    // Parse document.cookie robustly (value may contain '='). Return array of {name, value}
+    function parseCookies() {
+      const all = document.cookie || "";
+      if (!all) return [];
+      // split on "; " while also handling possible leading/trailing whitespace
+      return all.split(/;\s*/).map(pair => {
+        // split at first '='
+        const idx = pair.indexOf('=');
+        if (idx === -1) return { name: pair, value: "" };
+        const name = pair.slice(0, idx);
+        const value = pair.slice(idx + 1);
+        try {
+          // try to decode URI component safely
+          return { name: name, value: decodeURIComponent(value) };
+        } catch (e) {
+          return { name: name, value: value };
+        }
+      }).filter(c => c.name !== "");
+    }
+
+    function render() {
+      const body = document.getElementById('cookiesBody');
+      body.innerHTML = "";
+      const cookies = parseCookies();
+      if (cookies.length === 0) {
+        body.innerHTML = '<tr><td colspan="3" class="small">No readable cookies found on this page.</td></tr>';
+        return;
+      }
+
+      cookies.forEach(c => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.textContent = c.name;
+        tdName.title = c.name;
+
+        const tdVal = document.createElement('td');
+        tdVal.className = "value";
+        tdVal.textContent = c.value;
+        tdVal.title = c.value;
+
+        const tdActions = document.createElement('td');
+        tdActions.className = "actions";
+        tdActions.style.whiteSpace = "nowrap";
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(c.value);
+            copyBtn.textContent = "Copied";
+            setTimeout(()=> copyBtn.textContent = "Copy", 1200);
+          } catch (e) {
+            alert("Copy failed: " + (e && e.message || e));
+          }
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "negative";
+        deleteBtn.onclick = () => {
+          // best-effort remove: set expiry in past; try couple path variants
+          const name = c.name;
+          const past = "Thu, 01 Jan 1970 00:00:00 GMT";
+          // Common attempts for path/domain - path=/ and path=current
+          document.cookie = name + "=; expires=" + past + "; path=/";
+          document.cookie = name + "=; expires=" + past + "; path=" + (location.pathname || "/");
+          // Also attempt with domain (current host)
+          try {
+            const domain = location.hostname;
+            document.cookie = name + "=; expires=" + past + "; domain=" + domain + "; path=/";
+            // Also with leading dot
+            document.cookie = name + "=; expires=" + past + "; domain=." + domain + "; path=/";
+          } catch (e) {}
+          setTimeout(render, 200);
+        };
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          const newVal = prompt("New value for cookie \"" + c.name + "\"", c.value);
+          if (newVal !== null) {
+            // set cookie (path=/)
+            document.cookie = c.name + "=" + encodeURIComponent(newVal) + "; path=/";
+            render();
+          }
+        };
+
+        tdActions.appendChild(copyBtn);
+        tdActions.appendChild(editBtn);
+        tdActions.appendChild(deleteBtn);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdVal);
+        tr.appendChild(tdActions);
+        body.appendChild(tr);
+      });
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', render);
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const cookies = parseCookies();
+      const blob = new Blob([JSON.stringify(cookies, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (location.hostname || "cookies") + "-cookies.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('deleteAllBtn').addEventListener('click', () => {
+      if (!confirm("Delete all readable cookies? This will attempt best-effort deletions by setting expiry; some cookies may persist if they were set on different paths/domains or HttpOnly.")) return;
+      const cookies = parseCookies();
+      const past = "Thu, 01 Jan 1970 00:00:00 GMT";
+      cookies.forEach(c => {
+        const name = c.name;
+        document.cookie = name + "=; expires=" + past + "; path=/";
+        document.cookie = name + "=; expires=" + past + "; path=" + (location.pathname || "/");
+        try {
+          const domain = location.hostname;
+          document.cookie = name + "=; expires=" + past + "; domain=" + domain + "; path=/";
+          document.cookie = name + "=; expires=" + past + "; domain=." + domain + "; path=/";
+        } catch (e) {}
+      });
+      setTimeout(render, 300);
+    });
+
+    document.getElementById('setCookieBtn').addEventListener('click', () => {
+      const name = document.getElementById('setName').value.trim();
+      const value = document.getElementById('setValue').value;
+      if (!name) { alert("Enter a cookie name"); return; }
+      // set for 7 days by default
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = name + "=" + encodeURIComponent(value) + "; " + expires + "; path=/";
+      document.getElementById('setName').value = "";
+      document.getElementById('setValue').value = "";
+      render();
+    });
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
