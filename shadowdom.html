@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nested Shadow DOM Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        #header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+
+    <script>
+        // Get the header element
+        const header = document.getElementById('header');
+        
+        // Create the main shadow root
+        const mainShadow = header.attachShadow({ mode: 'open' });
+        
+        // Create container for the main shadow DOM
+        const mainContainer = document.createElement('div');
+        mainContainer.innerHTML = `
+            <style>
+                .main-container {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                }
+                .main-title {
+                    color: #333;
+                    margin: 0 0 10px 0;
+                    font-size: 24px;
+                }
+                .clicked-info {
+                    background: #f0f0f0;
+                    padding: 15px;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
+                    font-size: 18px;
+                    color: #333;
+                    text-align: center;
+                    min-height: 24px;
+                }
+                .clicked-info.active {
+                    background: #4CAF50;
+                    color: white;
+                    font-weight: bold;
+                }
+                .shadow-hosts {
+                    display: flex;
+                    gap: 20px;
+                    flex-wrap: wrap;
+                }
+                .shadow-host {
+                    flex: 1;
+                    min-width: 200px;
+                }
+            </style>
+            <div class="main-container">
+                <h1 class="main-title">Main Shadow DOM</h1>
+                <div class="clicked-info" id="clickedDisplay">Click a button below</div>
+                <div class="shadow-hosts">
+                    <div class="shadow-host" id="host1"></div>
+                    <div class="shadow-host" id="host2"></div>
+                    <div class="shadow-host" id="host3"></div>
+                </div>
+            </div>
+        `;
+        mainShadow.appendChild(mainContainer);
+        
+        // Create 3 nested shadow DOMs with buttons
+        for (let i = 1; i <= 3; i++) {
+            const host = mainShadow.getElementById(`host${i}`);
+            const nestedShadow = host.attachShadow({ mode: 'open' });
+            
+            const shadowContent = document.createElement('div');
+            shadowContent.innerHTML = `
+                <style>
+                    .nested-container {
+                        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                    }
+                    .shadow-title {
+                        color: white;
+                        margin: 0 0 15px 0;
+                        font-size: 18px;
+                    }
+                    button {
+                        background: white;
+                        color: #f5576c;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    button:hover {
+                        transform: scale(1.05);
+                    }
+                    button:active {
+                        transform: scale(0.95);
+                    }
+                    button.clicked {
+                        background: black;
+                        color: white;
+                    }
+                </style>
+                <div class="nested-container">
+                    <h2 class="shadow-title">Shadow DOM ${i}</h2>
+                    <button>Button ${i}</button>
+                </div>
+            `;
+            
+            nestedShadow.appendChild(shadowContent);
+            
+            // Add click event to the button
+            const button = nestedShadow.querySelector('button');
+            button.addEventListener('click', () => {
+                // Change button color to black
+                button.classList.add('clicked');
+                
+                // Update the display at the top
+                const clickedDisplay = mainShadow.getElementById('clickedDisplay');
+                clickedDisplay.textContent = `Button ${i} clicked!`;
+                clickedDisplay.classList.add('active');
+            });
+        }
+    </script>
+</body>
+</html>
