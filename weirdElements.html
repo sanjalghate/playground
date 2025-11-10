@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Messed Up Elements Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      height: 2000px;
+      padding: 20px;
+    }
+
+    /* Deeply nested element */
+    .level1 { border: 2px solid red; padding: 5px; }
+    .level2 { border: 2px dashed blue; padding: 5px; }
+    .level3 { border: 2px dotted green; padding: 5px; }
+    .level4, .level5, .level6, .level7, .level8, .level9, .level10 {
+      padding: 5px;
+      border: 1px solid #ccc;
+    }
+
+    /* Zero-height visible element */
+    .zero-height {
+      height: 0;
+      overflow: visible;
+      border: 1px solid orange;
+      margin-top: 20px;
+    }
+    .zero-height span {
+      display: inline-block;
+      height: 10px;
+      width: 100px;
+      background: orange;
+    }
+
+    /* Hidden parent but visible child (via absolute positioning) */
+    .hidden-parent {
+      visibility: hidden;
+      position: relative;
+    }
+    .hidden-parent .visible-child {
+      position: absolute;
+      top: 0;
+      left: 0;
+      visibility: visible;
+      background: yellow;
+      padding: 5px;
+    }
+
+    /* Offscreen element */
+    .offscreen {
+      position: absolute;
+      left: -500px;
+      top: 100px;
+      background: violet;
+      padding: 5px;
+    }
+
+    /* Overlapping elements */
+    .overlap-container {
+      position: relative;
+      width: 200px;
+      height: 100px;
+      margin-top: 20px;
+    }
+    .overlap1, .overlap2 {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    .overlap1 { background: rgba(255, 0, 0, 0.4); z-index: 1; }
+    .overlap2 { background: rgba(0, 0, 255, 0.4); z-index: 2; }
+
+    /* Hidden via opacity but still interactive */
+    .transparent {
+      opacity: 0;
+      background: green;
+      padding: 10px;
+      border: 1px solid black;
+    }
+
+    /* Shadow DOM container */
+    .shadow-host {
+      margin-top: 20px;
+      border: 2px solid purple;
+      padding: 10px;
+    }
+
+    iframe {
+      width: 300px;
+      height: 150px;
+      border: 2px solid black;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Weird & Messed Up Elements Playground</h1>
+
+  <!-- Deeply nested element -->
+  <div class="level1">
+    <div class="level2">
+      <div class="level3">
+        <div class="level4">
+          <div class="level5">
+            <div class="level6">
+              <div class="level7">
+                <div class="level8">
+                  <div class="level9">
+                    <div class="level10">
+                      <p id="deepElement">Deeply Nested Element (10 levels!)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zero height but visible content -->
+  <div class="zero-height">
+    <span id="fakeHeight">Visible content in zero-height container</span>
+  </div>
+
+  <!-- Hidden parent with visible child -->
+  <div class="hidden-parent">
+    Hidden parent
+    <div class="visible-child" id="visibleInHidden">
+      Visible even though parent is hidden
+    </div>
+  </div>
+
+  <!-- Offscreen element -->
+  <div class="offscreen" id="offscreenElement">Offscreen element (left -500px)</div>
+
+  <!-- Overlapping elements -->
+  <div class="overlap-container">
+    <div class="overlap1"></div>
+    <div class="overlap2" id="topOverlap">Overlapping element on top</div>
+  </div>
+
+  <!-- Transparent element -->
+  <div class="transparent" id="transparentBox">Invisible but clickable</div>
+
+  <!-- Shadow DOM element -->
+  <div class="shadow-host" id="shadowHost">Shadow host area</div>
+
+  <!-- iframe with its own weird content -->
+  <iframe srcdoc="
+    <html>
+      <body style='background: pink;'>
+        <p id='iframeText'>I’m inside an iframe!</p>
+        <div style='height:0;overflow:visible;'>
+          <span style='background: lime;'>Visible in 0 height box</span>
+        </div>
+      </body>
+    </html>
+  "></iframe>
+
+  <script>
+    // Create shadow DOM
+    const host = document.getElementById('shadowHost');
+    const shadowRoot = host.attachShadow({ mode: 'open' });
+    shadowRoot.innerHTML = `
+      <style>
+        .shadow-box {
+          background: #e0c3fc;
+          padding: 5px;
+          border: 1px dashed #333;
+        }
+      </style>
+      <div class="shadow-box" id="shadowChild">I'm inside the shadow DOM!</div>
+    `;
+  </script>
+
+</body>
+</html>

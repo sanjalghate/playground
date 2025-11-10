@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ultimate Messed Up Elements Playground</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(180deg, #fafafa 0%, #eaeaea 100%);
+      font-family: Arial, sans-serif;
+      height: 3000px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    section {
+      margin-bottom: 40px;
+      border: 1px dashed #aaa;
+      padding: 10px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* 1. Deeply nested element */
+    .deep { border: 2px solid #f00; padding: 5px; }
+    .deep div { border: 1px solid #ccc; padding: 5px; }
+
+    /* 2. Zero height visible */
+    .zero-height {
+      height: 0;
+      overflow: visible;
+      border: 1px solid orange;
+    }
+    .zero-height span {
+      background: orange;
+      display: inline-block;
+      height: 10px;
+    }
+
+    /* 3. Hidden parent with visible child */
+    .hidden-parent {
+      visibility: hidden;
+      position: relative;
+    }
+    .hidden-parent .visible-child {
+      visibility: visible;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: yellow;
+      padding: 5px;
+    }
+
+    /* 4. Offscreen */
+    .offscreen {
+      position: absolute;
+      left: -500px;
+      top: 200px;
+      background: violet;
+      padding: 5px;
+    }
+
+    /* 5. Overlapping */
+    .overlap-container {
+      position: relative;
+      width: 200px;
+      height: 100px;
+      margin-top: 20px;
+    }
+    .overlap1, .overlap2 {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    .overlap1 { background: rgba(255, 0, 0, 0.4); z-index: 1; }
+    .overlap2 { background: rgba(0, 0, 255, 0.4); z-index: 2; }
+
+    /* 6. Transparent but clickable */
+    .transparent {
+      opacity: 0;
+      background: green;
+      padding: 10px;
+      border: 1px solid black;
+    }
+
+    /* 7. Transformed elements */
+    .rotated {
+      transform: rotate(15deg) scale(1.2);
+      background: #ffc107;
+      display: inline-block;
+      padding: 10px;
+    }
+
+    /* 8. Clipped elements */
+    .clipped {
+      width: 100px;
+      height: 100px;
+      background: #009688;
+      clip-path: circle(40% at 50% 50%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 9. Overflow hidden parent */
+    .overflow-hidden {
+      width: 100px;
+      height: 50px;
+      overflow: hidden;
+      border: 2px solid red;
+    }
+    .overflow-hidden .child {
+      height: 100px;
+      background: pink;
+    }
+
+    /* 10. Display: contents test */
+    .contents-test {
+      display: contents;
+      background: yellow;
+      border: 2px solid green;
+    }
+
+    /* 11. Sticky + fixed */
+    .sticky {
+      position: sticky;
+      top: 0;
+      background: lightblue;
+      padding: 5px;
+    }
+    .fixed {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: lightgreen;
+      padding: 5px;
+      z-index: 9999;
+    }
+
+    /* 12. Hover layout shift */
+    .hover-shift {
+      background: salmon;
+      width: 100px;
+      height: 30px;
+      transition: all 0.3s ease;
+    }
+    .hover-shift:hover {
+      width: 150px;
+      height: 60px;
+    }
+
+    /* 13. Negative z-index */
+    .negative-z {
+      position: relative;
+      z-index: -1;
+      background: gold;
+      padding: 10px;
+    }
+
+    /* 14. Mask + filter */
+    .masked {
+      background: linear-gradient(to right, red, blue);
+      width: 100px;
+      height: 100px;
+      mask-image: radial-gradient(circle, white 60%, transparent 61%);
+      -webkit-mask-image: radial-gradient(circle, white 60%, transparent 61%);
+      filter: blur(1px);
+    }
+
+    /* 15. Backdrop filter & blend mode */
+    .blend {
+      background: rgba(255,255,255,0.3);
+      mix-blend-mode: multiply;
+      backdrop-filter: blur(4px);
+      width: 150px;
+      height: 50px;
+      border: 1px solid #333;
+    }
+
+    /* 16. Shadow DOM */
+    .shadow-host {
+      border: 2px solid purple;
+      padding: 10px;
+      margin-top: 20px;
+    }
+
+    /* 17. Nested iframe */
+    iframe {
+      width: 300px;
+      height: 150px;
+      border: 2px solid black;
+      margin-top: 20px;
+    }
+
+    /* 18. Pseudo element overlays */
+    .pseudo::before {
+      content: "Before!";
+      position: absolute;
+      background: rgba(255, 0, 0, 0.3);
+      top: 0; left: 0;
+    }
+
+    /* 19. Hidden via display:none (invisible) */
+    .none {
+      display: none;
+    }
+
+    /* 20. Scroll hidden region */
+    .scroll-area {
+      width: 150px;
+      height: 50px;
+      overflow: scroll;
+      border: 1px solid #aaa;
+    }
+    .scroll-area div {
+      width: 300px;
+      height: 100px;
+      background: repeating-linear-gradient(45deg, #ff9, #f9f 10px, #9ff 20px);
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Ultimate Messed-Up Elements Test Page 🔥</h1>
+
+  <section id="nested">
+    <div class="deep">
+      <div><div><div><div><div><div><div><div><div><div><p id="deepElement">Deeply Nested (10 levels)</p></div></div></div></div></div></div></div></div></div></div>
+    </div>
+  </section>
+
+  <section><div class="zero-height"><span>Visible content in 0 height</span></div></section>
+  <section><div class="hidden-parent"><div class="visible-child">Visible inside hidden parent</div></div></section>
+  <section><div class="offscreen">Offscreen element</div></section>
+  <section><div class="overlap-container"><div class="overlap1"></div><div class="overlap2">Top Overlap</div></div></section>
+  <section><div class="transparent">Invisible but clickable</div></section>
+  <section><div class="rotated">Rotated text</div></section>
+  <section><div class="clipped">Clipped</div></section>
+  <section><div class="overflow-hidden"><div class="child">Hidden part</div></div></section>
+  <section><div class="contents-test"><p>I'm inside display: contents</p></div></section>
+  <section><div class="sticky">Sticky element</div></section>
+  <section><div class="fixed">Fixed position box</div></section>
+  <section><div class="hover-shift">Hover me</div></section>
+  <section><div class="negative-z">Negative z-index</div></section>
+  <section><div class="masked"></div></section>
+  <section><div class="blend"></div></section>
+  <section><div class="shadow-host" id="shadowHost">Shadow Host</div></section>
+  <section><div class="pseudo" style="position:relative; background:#ddd; padding:10px;">Pseudo overlay box</div></section>
+  <section><div class="scroll-area"><div></div></div></section>
+  <section><div class="none">This shouldn't appear</div></section>
+
+  <!-- iframe with nested weirdness -->
+  <iframe srcdoc="
+    <html>
+      <body style='background:#fee; font-family:sans-serif;'>
+        <p id='iframeText'>I’m inside an iframe!</p>
+        <div style='height:0; overflow:visible;'>
+          <span style='background:lime;'>Visible 0-height content</span>
+        </div>
+        <iframe srcdoc='<html><body style=&quot;background:#eef;&quot;><div style=&quot;transform:rotate(10deg);background:#cfc;&quot;>Nested iframe!</div></body></html>'></iframe>
+      </body>
+    </html>
+  "></iframe>
+
+  <script>
+    // Shadow DOM
+    const host = document.getElementById('shadowHost');
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML = `
+      <style>
+        .shadow-content {
+          background: #e0c3fc;
+          padding: 5px;
+          border: 1px dashed #333;
+        }
+      </style>
+      <div class="shadow-content" id="shadowChild">I'm inside shadow DOM!</div>
+    `;
+  </script>
+</body>
+</html>
