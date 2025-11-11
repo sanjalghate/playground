@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mismatched Element Bounding Boxes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #fafafa;
+    }
+
+    .test {
+      margin: 20px 0;
+      border: 1px dashed #aaa;
+      position: relative;
+    }
+
+    /* 1️⃣ Pseudo-element visible but parent has 0 height */
+    .pseudo::before {
+      content: "Visible (from ::before)";
+      background: lightgreen;
+      display: block;
+      padding: 20px;
+    }
+
+    /* 2️⃣ display: contents */
+    .contents {
+      display: contents;
+    }
+
+    .contents span {
+      background: lightcoral;
+      padding: 20px;
+      display: inline-block;
+    }
+
+    /* 3️⃣ absolutely positioned child */
+    .absolute {
+      position: relative;
+      background: #f0f0f0;
+    }
+
+    .absolute > div {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: skyblue;
+      padding: 20px;
+    }
+
+    /* 4️⃣ overflow hidden clipping */
+    .overflow {
+      width: 200px;
+      height: 50px;
+      overflow: hidden;
+      background: #eee;
+    }
+
+    .overflow > div {
+      height: 150px;
+      background: gold;
+    }
+
+    /* 5️⃣ transformed element */
+    .scaled {
+      background: pink;
+      height: 20px;
+      transform: scaleY(5);
+    }
+  </style>
+</head>
+<body>
+  <h1>Examples where visual height ≠ getBoundingClientRect().height</h1>
+
+  <div class="test pseudo" id="pseudo"></div>
+  <div class="test contents" id="contents"><span>Visible content</span></div>
+  <div class="test absolute" id="absolute"><div>Absolutely positioned child</div></div>
+  <div class="test overflow" id="overflow"><div></div></div>
+  <div class="test scaled" id="scaled"></div>
+
+  <script>
+    const ids = ["pseudo", "contents", "absolute", "overflow", "scaled"];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      const rect = el.getBoundingClientRect();
+      console.log(`${id} → height from getBoundingClientRect(): ${rect.height}`);
+    });
+  </script>
+</body>
+</html>
