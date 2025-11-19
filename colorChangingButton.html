@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Changing Button</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="colorBtn">Color Changing Button</button>
+
+  <script>
+    const btn = document.getElementById("colorBtn");
+
+    function getRandomColor() {
+      return `hsl(${Math.floor(Math.random() * 360)}, 80%, 50%)`;
+    }
+
+    setInterval(() => {
+      btn.style.backgroundColor = getRandomColor();
+    }, 500); // Change color every 500ms
+  </script>
+
+</body>
+</html>
