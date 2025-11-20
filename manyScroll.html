@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Infinite Scroll Grid</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: auto;
+
+      /* Grid grows as we add more cells */
+      display: grid;
+      grid-auto-rows: 120px;
+      grid-auto-columns: 200px;
+      gap: 20px;
+
+      width: max-content;  
+      height: max-content;
+      padding: 40px;
+    }
+
+    button {
+      width: 180px;
+      height: 100px;
+      border: none;
+      border-radius: 12px;
+      background: #333;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.12s;
+    }
+
+    button:hover {
+      background: #555;
+      transform: translateY(-4px);
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+  const ROWS = 10;
+  const COLS = 10;
+  let generatedRows = ROWS;
+  let generatedCols = COLS;
+
+  // Generate the initial 10×10
+  function generateGrid(rStart = 1, rEnd = ROWS, cStart = 1, cEnd = COLS) {
+    for (let r = rStart; r <= rEnd; r++) {
+      for (let c = cStart; c <= cEnd; c++) {
+        const btn = document.createElement("button");
+        btn.textContent = `R${r} C${c}`;
+        btn.style.gridRowStart = r;
+        btn.style.gridColumnStart = c;
+        document.body.appendChild(btn);
+      }
+    }
+  }
+
+  generateGrid();
+
+  // Detect scroll near edges
+  window.addEventListener("scroll", () => {
+    const nearRight = window.scrollX + window.innerWidth >= document.body.scrollWidth - 300;
+    const nearBottom = window.scrollY + window.innerHeight >= document.body.scrollHeight - 300;
+
+    const nearLeft = window.scrollX <= 200;
+    const nearTop = window.scrollY <= 200;
+
+    // Scroll right → add more columns
+    if (nearRight) {
+      const oldCols = generatedCols;
+      generatedCols += 10;
+      generateGrid(1, generatedRows, oldCols + 1, generatedCols);
+    }
+
+    // Scroll bottom → add more rows
+    if (nearBottom) {
+      const oldRows = generatedRows;
+      generatedRows += 10;
+      generateGrid(oldRows + 1, generatedRows, 1, generatedCols);
+    }
+
+    // Scroll left → add columns to the left
+    if (nearLeft) {
+      const oldCols = generatedCols;
+      const newCols = generatedCols + 10;
+
+      for (let r = 1; r <= generatedRows; r++) {
+        for (let c = 1; c <= 10; c++) {
+          const btn = document.createElement("button");
+          btn.textContent = `R${r} C-${c}`;
+          btn.style.gridRowStart = r;
+          btn.style.gridColumnStart = -c;
+          document.body.appendChild(btn);
+        }
+      }
+    }
+
+    // Scroll up → add rows above
+    if (nearTop) {
+      const oldRows = generatedRows;
+      const newRows = generatedRows + 10;
+
+      for (let r = 1; r <= 10; r++) {
+        for (let c = 1; c <= generatedCols; c++) {
+          const btn = document.createElement("button");
+          btn.textContent = `R-${r} C${c}`;
+          btn.style.gridColumnStart = c;
+          btn.style.gridRowStart = -r;
+          document.body.appendChild(btn);
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
