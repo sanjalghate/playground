@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Automation Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .button-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button::before {
+            content: attr(data-number);
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 32px;
+            font-weight: 700;
+            opacity: 0.3;
+        }
+
+        .button-title {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .button-desc {
+            display: block;
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #495057;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status.active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        button {
+            animation: fadeIn 0.5s ease backwards;
+        }
+
+        button:nth-child(1) { animation-delay: 0.1s; }
+        button:nth-child(2) { animation-delay: 0.2s; }
+        button:nth-child(3) { animation-delay: 0.3s; }
+        button:nth-child(4) { animation-delay: 0.4s; }
+        button:nth-child(5) { animation-delay: 0.5s; }
+        button:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Browser Automation Test Suite</h1>
+        <p class="subtitle">Click buttons to simulate different error scenarios for page?.execute() testing</p>
+        
+        <div class="button-grid">
+            <button data-number="1" onclick="simulateNullPage()">
+                <span class="button-title">Null/Undefined Page</span>
+                <span class="button-desc">Deletes window.navigator to simulate page?.execute() returning undefined</span>
+            </button>
+
+            <button data-number="2" onclick="simulatePageClosed()">
+                <span class="button-title">Page/Tab Closed</span>
+                <span class="button-desc">Closes the browser tab/window immediately</span>
+            </button>
+
+            <button data-number="3" onclick="simulateExecuteFailure()">
+                <span class="button-title">Execute Method Fails</span>
+                <span class="button-desc">Throws an error during execution</span>
+            </button>
+
+            <button data-number="4" onclick="simulatePageNotReady()">
+                <span class="button-title">Page Not Ready</span>
+                <span class="button-desc">Puts DOM in a bad state by removing all content</span>
+            </button>
+
+            <button data-number="5" onclick="simulateNavigation()">
+                <span class="button-title">Navigation in Progress</span>
+                <span class="button-desc">Navigates to a new URL, destroying execution context</span>
+            </button>
+
+            <button data-number="6" onclick="simulateTimeout()">
+                <span class="button-title">Timeout Without Result</span>
+                <span class="button-desc">Creates an infinite loop to cause timeout</span>
+            </button>
+        </div>
+
+        <div class="status" id="status">
+            Ready to test. Click a button to simulate an error scenario.
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, active = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = active ? 'status active' : 'status';
+        }
+
+        // 1. Simulate null/undefined page
+        function simulateNullPage() {
+            updateStatus('Scenario 1: Deleting navigator object...', true);
+            setTimeout(() => {
+                delete window.navigator;
+                updateStatus('Navigator deleted. page?.execute() will return undefined.', true);
+            }, 500);
+        }
+
+        // 2. Simulate page/tab closed
+        function simulatePageClosed() {
+            updateStatus('Scenario 2: Closing tab in 2 seconds...', true);
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        }
+
+        // 3. Simulate execute method failure
+        function simulateExecuteFailure() {
+            updateStatus('Scenario 3: Throwing error...', true);
+            setTimeout(() => {
+                throw new Error('Simulated execution error - this will cause page?.execute() to fail');
+            }, 500);
+        }
+
+        // 4. Simulate page not ready
+        function simulatePageNotReady() {
+            updateStatus('Scenario 4: Destroying DOM...', true);
+            setTimeout(() => {
+                document.body.innerHTML = '';
+                document.documentElement.innerHTML = '';
+            }, 500);
+        }
+
+        // 5. Simulate navigation in progress
+        function simulateNavigation() {
+            updateStatus('Scenario 5: Navigating to new page in 1 second...', true);
+            setTimeout(() => {
+                window.location.href = 'about:blank';
+            }, 1000);
+        }
+
+        // 6. Simulate timeout
+        function simulateTimeout() {
+            updateStatus('Scenario 6: Creating infinite loop for timeout...', true);
+            setTimeout(() => {
+                while(true) {
+                    // Infinite loop to cause timeout
+                }
+            }, 500);
+        }
+
+        // Make navigator check available globally for testing
+        window.testNavigatorOnline = function() {
+            return window.navigator.onLine;
+        };
+    </script>
+</body>
+</html>
