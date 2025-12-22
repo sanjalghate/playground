@@ -1,0 +1,18 @@
+<!-- slow.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Slow Loading...</title>
+    <script>
+        // Fake a slow load (e.g., 10 seconds)
+        const start = Date.now();
+        while (Date.now() - start < 10000) {
+            // busy wait (blocks rendering)
+        }
+    </script>
+</head>
+<body>
+    <h1>This took a while to load!</h1>
+    <p>Simulated delay complete.</p>
+</body>
+</html>
