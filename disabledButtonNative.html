@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Native Dropdown</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 8px 12px;
+      margin-right: 10px;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <select id="stateSelect">
+    <option value="">Select a state</option>
+    <option>ACT</option>
+    <option>New South Wales</option>
+    <option>Northern Territory</option>
+    <option>Queensland</option>
+    <option>South Australia</option>
+    <option>Tasmania</option>
+    <option>Victoria</option>
+    <option>Western Australia</option>
+  </select>
+
+  <button id="submitBtn" disabled>
+    Continue
+  </button>
+
+  <script>
+    const select = document.getElementById("stateSelect");
+    const button = document.getElementById("submitBtn");
+
+    select.addEventListener("change", () => {
+      button.disabled = select.value === "";
+    });
+  </script>
+
+</body>
+</html>
