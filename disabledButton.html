@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dropdown Enable Button</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 8px 12px;
+      margin-right: 10px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Select an option to enable the button</h2>
+
+  <select id="dropdown">
+    <option value="">-- Select an option --</option>
+    <option value="option1">Option 1</option>
+    <option value="option2">Option 2</option>
+    <option value="option3">Option 3</option>
+  </select>
+
+  <button id="actionButton" disabled>
+    Click Me
+  </button>
+
+  <script>
+    const dropdown = document.getElementById("dropdown");
+    const button = document.getElementById("actionButton");
+
+    dropdown.addEventListener("change", () => {
+      button.disabled = dropdown.value === "";
+    });
+
+    button.addEventListener("click", () => {
+      alert(`You selected: ${dropdown.value}`);
+    });
+  </script>
+
+</body>
+</html>
