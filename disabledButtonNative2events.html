@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enable Button After Input + Change</title>
+</head>
+<body>
+
+  <select id="dropdown">
+    <option value="">Select an option</option>
+    <option>Option 1</option>
+    <option>Option 2</option>
+    <option>Option 3</option>
+  </select>
+
+  <button id="btn" disabled>Continue</button>
+
+  <script>
+    const dropdown = document.getElementById("dropdown");
+    const button = document.getElementById("btn");
+
+    let inputTriggered = false;
+    let changeTriggered = false;
+
+    function updateButtonState() {
+      button.disabled = !(inputTriggered && changeTriggered && dropdown.value);
+    }
+
+    dropdown.addEventListener("input", () => {
+      inputTriggered = true;
+      updateButtonState();
+    });
+
+    dropdown.addEventListener("change", () => {
+      changeTriggered = true;
+      updateButtonState();
+    });
+  </script>
+
+</body>
+</html>
