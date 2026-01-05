@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shadow DOM Button inside Iframe</title>
+</head>
+<body>
+  <h2>Main Page</h2>
+
+  <iframe
+    id="shadow-iframe"
+    width="400"
+    height="200"
+    srcdoc='
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <h3>Iframe Content</h3>
+
+        <div id="shadow-host"></div>
+
+        <script>
+          const host = document.getElementById("shadow-host");
+          const shadowRoot = host.attachShadow({ mode: "open" });
+
+          const button = document.createElement("button");
+          button.textContent = "Shadow DOM Button";
+          button.style.padding = "10px 16px";
+          button.style.cursor = "pointer";
+
+          button.addEventListener("click", () => {
+            alert("Shadow DOM button clicked!");
+          });
+
+          shadowRoot.appendChild(button);
+        </script>
+      </body>
+      </html>
+    '
+  ></iframe>
+
+</body>
+</html>
