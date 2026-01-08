@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checkout – Shadow DOM Popup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f7f7f7;
+    }
+
+    header {
+      background: #fff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    nav a {
+      margin-right: 16px;
+      text-decoration: none;
+      color: #555;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .box {
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 12px;
+      background: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 16px;
+    }
+
+    button:hover {
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>Demo Instance</h2>
+  <nav>
+    <a href="#">Home</a>
+    <a href="#">Cart</a>
+    <a href="#"><strong>Checkout</strong></a>
+    <a href="#">My Account</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="box">
+    <h3>Checkout</h3>
+    <p>Click the button below to simulate a payment confirmation popup.</p>
+
+    <!-- Button that triggers shadow popup -->
+    <button id="open-popup">Proceed to Payment</button>
+
+    <!-- Shadow host -->
+    <shadow-popup></shadow-popup>
+  </div>
+</div>
+
+<script>
+  class ShadowPopup extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+    }
+
+    connectedCallback() {
+      this.render();
+    }
+
+    render() {
+      this.shadowRoot.innerHTML = `
+        <style>
+          .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+          }
+
+          .modal {
+            background: #fff;
+            padding: 24px;
+            width: 320px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+          }
+
+          h4 {
+            margin-top: 0;
+          }
+
+          button {
+            margin-top: 16px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #333;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+          }
+
+          button:hover {
+            background: #111;
+          }
+        </style>
+
+        <div class="overlay">
+          <div class="modal">
+            <h4>Confirm Payment</h4>
+            <p>This popup is inside a <strong>Shadow Root</strong>.</p>
+            <button id="confirm">Confirm</button>
+            <button id="close">Cancel</button>
+          </div>
+        </div>
+      `;
+
+      const overlay = this.shadowRoot.querySelector('.overlay');
+
+      document
+        .getElementById('open-popup')
+        .addEventListener('click', () => {
+          overlay.style.display = 'flex';
+        });
+
+      this.shadowRoot
+        .getElementById('close')
+        .addEventListener('click', () => {
+          overlay.style.display = 'none';
+        });
+
+      this.shadowRoot
+        .getElementById('confirm')
+        .addEventListener('click', () => {
+          alert('Payment Confirmed');
+          overlay.style.display = 'none';
+        });
+    }
+  }
+
+  customElements.define('shadow-popup', ShadowPopup);
+</script>
+
+</body>
+</html>
