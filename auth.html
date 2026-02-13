@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auth, Headers, Cookies & Local Storage Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 24px;
+    }
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      margin-top: 14px;
+      cursor: pointer;
+    }
+    .output {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Auth, Headers, Cookies & Local Storage Viewer</h1>
+
+  <div class="card">
+    <h2>Basic Authentication</h2>
+    <label>Username</label>
+    <input id="basic-username" placeholder="Enter username" />
+
+    <label>Password</label>
+    <input id="basic-password" type="password" placeholder="Enter password" />
+
+    <button onclick="showBasicAuth()">Show Basic Auth</button>
+    <div id="basic-output" class="output"></div>
+  </div>
+
+  <div class="card">
+    <h2>Headers</h2>
+    <label>Headers (JSON format)</label>
+    <textarea id="headers-input" rows="4" placeholder='{"Authorization": "Bearer token", "X-Test": "123"}'></textarea>
+
+    <button onclick="showHeaders()">Show Headers</button>
+    <div id="headers-output" class="output"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cookies</h2>
+    <label>Cookie Key</label>
+    <input id="cookie-key" placeholder="cookie_name" />
+
+    <label>Cookie Value</label>
+    <input id="cookie-value" placeholder="cookie_value" />
+
+    <button onclick="setAndShowCookie()">Set & Show Cookie</button>
+    <div id="cookie-output" class="output"></div>
+  </div>
+
+  <div class="card">
+    <h2>Local Storage</h2>
+    <label>Local Storage Key</label>
+    <input id="ls-key" placeholder="key" />
+
+    <label>Local Storage Value</label>
+    <input id="ls-value" placeholder="value" />
+
+    <button onclick="setAndShowLocalStorage()">Set & Show Local Storage</button>
+    <div id="ls-output" class="output"></div>
+  </div>
+
+  <script>
+    function showBasicAuth() {
+      const username = document.getElementById('basic-username').value;
+      const password = document.getElementById('basic-password').value;
+      const encoded = btoa(`${username}:${password}`);
+
+      document.getElementById('basic-output').textContent =
+        `Username: ${username}\nPassword: ${password}\n\nAuthorization Header:\nBasic ${encoded}`;
+    }
+
+    function showHeaders() {
+      const input = document.getElementById('headers-input').value;
+      try {
+        const headers = JSON.parse(input);
+        let output = '';
+        for (const key in headers) {
+          output += `${key}: ${headers[key]}\n`;
+        }
+        document.getElementById('headers-output').textContent = output || 'No headers provided';
+      } catch (e) {
+        document.getElementById('headers-output').textContent = 'Invalid JSON';
+      }
+    }
+
+    function setAndShowCookie() {
+      const key = document.getElementById('cookie-key').value;
+      const value = document.getElementById('cookie-value').value;
+      document.cookie = `${key}=${value}; path=/`;
+
+      document.getElementById('cookie-output').textContent = `Current Cookies:\n${document.cookie}`;
+    }
+
+    function setAndShowLocalStorage() {
+      const key = document.getElementById('ls-key').value;
+      const value = document.getElementById('ls-value').value;
+      localStorage.setItem(key, value);
+
+      let output = '';
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        output += `${k}: ${localStorage.getItem(k)}\n`;
+      }
+      document.getElementById('ls-output').textContent = output || 'Local storage is empty';
+    }
+  </script>
+</body>
+</html>

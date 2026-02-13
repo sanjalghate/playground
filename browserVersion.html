@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Browser Info</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Browser Information</h1>
+    <p id="browserName"></p>
+    <p id="browserVersion"></p>
+  </div>
+
+  <script>
+    function getBrowserInfo() {
+      const userAgent = navigator.userAgent;
+      let browserName = "Unknown";
+      let browserVersion = "Unknown";
+
+      if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) {
+        browserName = "Google Chrome";
+        browserVersion = userAgent.match(/Chrome\/([\d.]+)/)[1];
+      } 
+      else if (userAgent.includes("Firefox")) {
+        browserName = "Mozilla Firefox";
+        browserVersion = userAgent.match(/Firefox\/([\d.]+)/)[1];
+      } 
+      else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+        browserName = "Safari";
+        browserVersion = userAgent.match(/Version\/([\d.]+)/)[1];
+      } 
+      else if (userAgent.includes("Edg")) {
+        browserName = "Microsoft Edge";
+        browserVersion = userAgent.match(/Edg\/([\d.]+)/)[1];
+      }
+
+      document.getElementById("browserName").textContent = "Browser Name: " + browserName;
+      document.getElementById("browserVersion").textContent = "Browser Version: " + browserVersion;
+    }
+
+    getBrowserInfo();
+  </script>
+
+</body>
+</html>
