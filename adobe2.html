@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orchestrated Workflow – Shadow DOM Test Page</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Adobe Clean', 'Source Sans Pro', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    /* Root provider wrapper — mirrors Adobe's DOM structure */
+    root-provider > div {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* nav bar */
+    .app-nav {
+      height: 46px;
+      background: #2c2c2c;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .app-nav .logo {
+      color: #fa0f00;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    .app-nav .nav-links { display: flex; gap: 20px; margin-left: 32px; }
+    .app-nav .nav-links a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    /* main layout below nav */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 220px;
+      background: #1e1e1e;
+      flex-shrink: 0;
+      padding: 24px 0;
+    }
+    .sidebar-item {
+      padding: 10px 24px;
+      color: #aaa;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .sidebar-item.active { color: #fff; background: #333; border-left: 3px solid #fa0f00; }
+
+    /* content wrapper — this is where orchestrated-workflow lives */
+    .content-wrapper {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .content-inner { flex: 1; display: flex; flex-direction: column; }
+    .paywall-wrapper { flex: 1; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+
+<!--
+  DOM structure mirrors Adobe's real page:
+  body > div > root-provider > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(2) > div > div > orchestrated-workflow
+-->
+<div>
+  <root-provider>
+    <div>
+      <!-- div:nth-child(1): nav -->
+      <nav class="app-nav">
+        <span class="logo">Ae</span>
+        <div class="nav-links">
+          <a href="#">Creative Cloud</a>
+          <a href="#">Plans</a>
+          <a href="#">Support</a>
+        </div>
+      </nav>
+
+      <!-- div:nth-child(2): body -->
+      <div class="app-body">
+        <!-- div > sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-item active">My Plan</div>
+          <div class="sidebar-item">Apps</div>
+          <div class="sidebar-item">Storage</div>
+          <div class="sidebar-item">Account</div>
+        </div>
+
+        <!-- div > div:nth-child(2): content -->
+        <div class="content-wrapper">
+          <div class="content-inner">
+            <div class="paywall-wrapper">
+              <!-- div:nth-child(2): select-paywall host -->
+              <div>
+                <!-- orchestrated-workflow custom element — single shadow DOM host -->
+                <orchestrated-workflow
+                  contextreferenceid="5e4e00de-d403-4a33-b528-dd22b14eaa7a"
+                  mat="mo"
+                  enableoverlaystylehoisting="true"
+                  promoid=""
+                  cli="cc_home"
+                  mv=""
+                  mv2=""
+                  svar=""
+                  co="US"
+                  lang="en"
+                  userid="122122D069A933080A49420D@AdobeID"
+                  cvar="paid_buy"
+                  wvar="ind-current-plan-multi-cards"
+                  ovar="paid_m2m"
+                  pa="phsp_direct_individual"
+                  wcid="select-paywall"
+                  oi="buy"
+                  usertype="PAID_USER"
+                  cs="INDIVIDUAL"
+                ></orchestrated-workflow>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </root-provider>
+</div>
+
+<script>
+  /**
+   * Registers <orchestrated-workflow> as a real custom element with a shadow root.
+   * The inner DOM mirrors what the selector in the bug targets:
+   *   DIV > DIV > DIV > DIV > DIV > DIV:nth-child(2) > DIV > DIV:nth-child(2) >
+   *   DIV > DIV > DIV > DIV > DIV > DIV > DIV:nth-child(2)
+   * That target element is the pricing card section (2nd card = Photoshop plan).
+   */
+  class OrchestratedWorkflow extends HTMLElement {
+    connectedCallback() {
+      const shadow = this.attachShadow({ mode: 'open' });
+
+      shadow.innerHTML = `
+        <style>
+          :host {
+            display: block;
+            width: 100%;
+            height: 100%;
+            font-family: 'Adobe Clean', 'Source Sans Pro', sans-serif;
+          }
+
+          /* ── reset ── */
+          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+          .ow-root {
+            width: 100%;
+            min-height: 100%;
+            background: #f8f8f8;
+          }
+
+          /* breadcrumb bar */
+          .breadcrumb {
+            padding: 12px 40px;
+            font-size: 12px;
+            color: #767676;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fff;
+          }
+          .breadcrumb a { color: #0265dc; text-decoration: none; }
+          .breadcrumb span { margin: 0 6px; }
+
+          /* hero */
+          .hero {
+            text-align: center;
+            padding: 48px 40px 32px;
+          }
+          .hero h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e1e1e;
+            margin-bottom: 12px;
+          }
+          .hero p {
+            font-size: 16px;
+            color: #505050;
+            max-width: 560px;
+            margin: 0 auto;
+          }
+
+          /* toggle */
+          .billing-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 0 32px;
+          }
+          .toggle-label { font-size: 14px; color: #505050; }
+          .toggle-label.active { color: #1e1e1e; font-weight: 600; }
+          .toggle-pill {
+            width: 44px;
+            height: 24px;
+            background: #0265dc;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+          }
+          .toggle-pill::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            top: 3px;
+            right: 3px;
+            transition: transform 0.2s;
+          }
+          .badge {
+            background: #e8f4e8;
+            color: #147a14;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+          }
+
+          /* cards grid — this is the layer the selector digs into */
+          .cards-section {
+            padding: 0 40px 48px;
+          }
+          .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+          }
+
+          /* card — div:nth-child(1) is Acrobat, div:nth-child(2) is Photoshop (the TARGET) */
+          .plan-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+          }
+          .plan-card.highlighted {
+            border-color: #0265dc;
+            box-shadow: 0 0 0 2px #0265dc22;
+          }
+
+          .card-header {
+            padding: 24px 24px 16px;
+            border-bottom: 1px solid #f0f0f0;
+          }
+          .card-app-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+          }
+          .icon-acrobat  { background: #ec1c24; }
+          .icon-photoshop { background: #001e36; color: #31a8ff; }
+          .icon-creative { background: linear-gradient(135deg, #ff2bc2, #ff8a00); }
+
+          .card-title { font-size: 18px; font-weight: 700; color: #1e1e1e; margin-bottom: 4px; }
+          .card-subtitle { font-size: 13px; color: #767676; }
+
+          .card-price-block {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+          }
+          .price-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+          .price-amount { font-size: 28px; font-weight: 700; color: #1e1e1e; }
+          .price-period { font-size: 13px; color: #767676; }
+          .price-note { font-size: 11px; color: #767676; }
+
+          .card-current-badge {
+            display: inline-block;
+            background: #e8f4e8;
+            color: #147a14;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+          }
+
+          .card-cta {
+            padding: 16px 24px;
+          }
+          .btn {
+            width: 100%;
+            padding: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.15s;
+          }
+          .btn:hover { opacity: 0.85; }
+          .btn-primary { background: #0265dc; color: #fff; }
+          .btn-secondary { background: transparent; border: 2px solid #0265dc; color: #0265dc; }
+          .btn-current { background: transparent; border: 2px solid #ccc; color: #767676; cursor: default; }
+
+          .card-features {
+            padding: 0 24px 24px;
+            flex: 1;
+          }
+          .card-features ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+          .card-features li {
+            font-size: 13px;
+            color: #505050;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+          }
+          .card-features li::before {
+            content: '✓';
+            color: #147a14;
+            font-weight: 700;
+            flex-shrink: 0;
+          }
+
+          /* footer note */
+          .footer-note {
+            text-align: center;
+            padding: 0 40px 32px;
+            font-size: 12px;
+            color: #767676;
+          }
+          .footer-note a { color: #0265dc; text-decoration: none; }
+
+          /* ── THE TARGET ELEMENT ──
+             Selector from the bug report resolves to the 2nd card's inner content div.
+             We give it a data-testid for easy identification.
+          */
+          .target-element {
+            /* This is the element the visual assert tries to screenshot */
+          }
+        </style>
+
+        <!--
+          Shadow DOM internal structure.
+          The outer selector from the log was:
+          DIV > DIV > DIV > DIV > DIV > DIV:nth-child(2) > DIV > DIV:nth-child(2) > DIV > DIV > DIV > DIV > DIV > DIV > DIV:nth-child(2)
+
+          We replicate that nesting depth below so the selector resolves correctly.
+        -->
+        <div class="ow-root">          <!-- DIV (1) -->
+          <div>                        <!-- DIV (2) -->
+            <div class="breadcrumb">   <!-- DIV (3) – breadcrumb (nth-child 1) -->
+              <a href="#">Creative Cloud</a>
+              <span>›</span>
+              <a href="#">Plans &amp; Products</a>
+              <span>›</span>
+              Change Plan
+            </div>
+            <div>                      <!-- DIV (4) – nth-child(2): main content wrapper -->
+              <div class="hero">       <!-- DIV (5) -->
+                <div>                  <!-- DIV (6) – nth-child(1): hero text -->
+                  <h1>Choose a plan that works for you</h1>
+                  <p>You're currently on Photoshop. Switch anytime.</p>
+                </div>
+                <div class="billing-toggle"> <!-- DIV (6) – nth-child(2): toggle → TARGET ANCESTOR -->
+                  <div>                <!-- DIV (7) -->
+                    <div class="billing-toggle">  <!-- DIV (8) – nth-child(1): toggle inner -->
+                      <span class="toggle-label">Monthly</span>
+                      <div class="toggle-pill"></div>
+                      <span class="toggle-label active">Annual</span>
+                      <span class="badge">Save up to 40%</span>
+                    </div>
+                    <div class="cards-section">  <!-- DIV (8) – nth-child(2): cards -->
+                      <div class="cards-grid">   <!-- DIV (9) -->
+                        <div>                    <!-- DIV (10) -->
+                          <div>                  <!-- DIV (11) -->
+                            <div>                <!-- DIV (12) -->
+                              <div>              <!-- DIV (13) -->
+                                <div>            <!-- DIV (14) – nth-child(1): first card wrapper -->
+                                  <div class="plan-card"> <!-- DIV (15) -->
+                                    <div class="card-header">
+                                      <div class="card-app-icon icon-acrobat">Ac</div>
+                                      <div class="card-title">Acrobat Pro</div>
+                                      <div class="card-subtitle">PDF &amp; e-signatures</div>
+                                    </div>
+                                    <div class="card-price-block">
+                                      <div class="price-row">
+                                        <span class="price-amount">₹1,675</span>
+                                        <span class="price-period">/mo</span>
+                                      </div>
+                                      <div class="price-note">Billed annually · ₹20,098/yr</div>
+                                    </div>
+                                    <div class="card-cta">
+                                      <button class="btn btn-primary">Switch to Acrobat Pro</button>
+                                    </div>
+                                    <div class="card-features">
+                                      <ul>
+                                        <li>Create, edit &amp; sign PDFs</li>
+                                        <li>E-sign &amp; collect signatures</li>
+                                        <li>Export to Word, Excel</li>
+                                        <li>100GB cloud storage</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- ↓ DIV (14) nth-child(2): PHOTOSHOP card — THIS is the TARGET -->
+                                <div class="target-element" data-testid="photoshop-card-wrapper" id="visual-assert-target">
+                                  <div class="plan-card highlighted"> <!-- DIV (15) nth-child(2) -->
+                                    <div class="card-header">
+                                      <div class="card-app-icon icon-photoshop">Ps</div>
+                                      <div class="card-title">Photoshop</div>
+                                      <div class="card-subtitle">Image editing &amp; compositing</div>
+                                    </div>
+                                    <div class="card-price-block">
+                                      <div class="card-current-badge">✓ Current plan</div>
+                                      <div class="price-row">
+                                        <span class="price-amount">₹1,675</span>
+                                        <span class="price-period">/mo</span>
+                                      </div>
+                                      <div class="price-note">Billed annually · ₹20,098/yr</div>
+                                    </div>
+                                    <div class="card-cta">
+                                      <button class="btn btn-current" disabled>Your current plan</button>
+                                    </div>
+                                    <div class="card-features">
+                                      <ul>
+                                        <li>Edit photos &amp; composites</li>
+                                        <li>Generative AI features</li>
+                                        <li>Neural filters &amp; sky replacement</li>
+                                        <li>100GB cloud storage</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div> <!-- DIV (14) nth-child(3): Creative Cloud card -->
+                                  <div class="plan-card">
+                                    <div class="card-header">
+                                      <div class="card-app-icon icon-creative">Cc</div>
+                                      <div class="card-title">Creative Cloud All Apps</div>
+                                      <div class="card-subtitle">20+ creative apps</div>
+                                    </div>
+                                    <div class="card-price-block">
+                                      <div class="price-row">
+                                        <span class="price-amount">₹4,230</span>
+                                        <span class="price-period">/mo</span>
+                                      </div>
+                                      <div class="price-note">Billed annually · ₹50,760/yr</div>
+                                    </div>
+                                    <div class="card-cta">
+                                      <button class="btn btn-secondary">Upgrade to All Apps</button>
+                                    </div>
+                                    <div class="card-features">
+                                      <ul>
+                                        <li>Photoshop, Illustrator, InDesign</li>
+                                        <li>Premiere Pro &amp; After Effects</li>
+                                        <li>XD, Animate, Audition &amp; more</li>
+                                        <li>1TB cloud storage</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-note">
+          Cancel anytime. <a href="#">See terms</a>. Prices shown in INR and include GST.
+        </div>
+      `;
+    }
+  }
+
+  customElements.define('orchestrated-workflow', OrchestratedWorkflow);
+</script>
+
+</body>
+</html>
