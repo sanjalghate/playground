@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Elements — The Complete Field Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f0e0d;
+      --paper: #f5f0e8;
+      --cream: #ede7d9;
+      --rust: #c1440e;
+      --gold: #c89a2e;
+      --forest: #2d5a27;
+      --slate: #3d4a5c;
+      --muted: #8a7f72;
+      --border: #c4b9a8;
+      --shadow: rgba(15,14,13,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ─── Header ─── */
+    header {
+      padding: 4rem 2rem 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: 'SELECT';
+      position: absolute;
+      bottom: -0.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(5rem, 20vw, 14rem);
+      font-weight: 700;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--border);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      color: var(--rust);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--rust);
+    }
+
+    .subtitle {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 480px;
+      margin-inline: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Layout ─── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+      display: grid;
+      gap: 3rem;
+    }
+
+    /* ─── Section card ─── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 2.5rem;
+      box-shadow: 4px 4px 0 var(--cream);
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.2s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+    .card:nth-child(6) { animation-delay: 0.3s; }
+    .card:nth-child(7) { animation-delay: 0.35s; }
+    .card:nth-child(8) { animation-delay: 0.4s; }
+    .card:nth-child(9) { animation-delay: 0.45s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--cream);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* ─── Demo area ─── */
+    .demo {
+      background: var(--paper);
+      border: 1px dashed var(--border);
+      border-radius: 2px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .demo-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--slate);
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    /* ─── 1. Native <select> ─── */
+    select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--ink);
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      padding: 0.5rem 2.5rem 0.5rem 0.85rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7f72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-width: 180px;
+    }
+
+    select:hover { border-color: var(--slate); }
+    select:focus { outline: none; border-color: var(--rust); box-shadow: 0 0 0 3px rgba(193,68,14,0.1); }
+
+    select[multiple] {
+      background-image: none;
+      padding-right: 0.85rem;
+      height: auto;
+      min-height: 120px;
+    }
+
+    select[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ─── Chip multi-select ─── */
+    .chip-select-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .chip-pool {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      color: var(--slate);
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .chip:hover { border-color: var(--slate); background: var(--cream); }
+    .chip.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    .chip-selected-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      min-height: 1.2rem;
+    }
+
+    /* ─── Custom dropdown ─── */
+    .custom-select-wrapper {
+      position: relative;
+      min-width: 200px;
+    }
+
+    .custom-select-btn {
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      padding: 0.5rem 2.5rem 0.5rem 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.15s;
+    }
+
+    .custom-select-btn:hover { border-color: var(--slate); }
+    .custom-select-btn.open { border-color: var(--rust); border-bottom-color: transparent; border-radius: 2px 2px 0 0; }
+
+    .custom-select-arrow {
+      width: 10px;
+      height: 10px;
+      border-right: 1.5px solid var(--muted);
+      border-bottom: 1.5px solid var(--muted);
+      transform: rotate(45deg);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-top: -4px;
+    }
+
+    .custom-select-btn.open .custom-select-arrow { transform: rotate(-135deg); margin-top: 4px; }
+
+    .custom-select-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #fff;
+      border: 1.5px solid var(--rust);
+      border-top: none;
+      border-radius: 0 0 2px 2px;
+      z-index: 100;
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .custom-select-dropdown.open { display: block; }
+
+    .custom-option {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: background 0.1s;
+    }
+
+    .custom-option:hover { background: var(--cream); }
+    .custom-option.highlighted { background: var(--ink); color: #fff; }
+
+    .custom-option .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── Radio group as select ─── */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #fff;
+    }
+
+    .radio-option:hover { border-color: var(--slate); background: var(--cream); }
+    .radio-option input[type="radio"] { accent-color: var(--rust); }
+    .radio-option.chosen { border-color: var(--rust); background: rgba(193,68,14,0.04); }
+
+    .radio-option span { font-size: 0.88rem; flex: 1; }
+    .radio-option .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--cream);
+      color: var(--muted);
+      padding: 0.15rem 0.4rem;
+      border-radius: 2px;
+    }
+
+    /* ─── Searchable select ─── */
+    .search-select-wrapper {
+      position: relative;
+      min-width: 240px;
+    }
+
+    .search-select-input {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      padding: 0.5rem 0.85rem 0.5rem 2.2rem;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a7f72' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 0.65rem center;
+      color: var(--ink);
+      transition: border-color 0.15s;
+    }
+
+    .search-select-input:focus { outline: none; border-color: var(--rust); box-shadow: 0 0 0 3px rgba(193,68,14,0.1); }
+
+    .search-select-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      z-index: 100;
+      max-height: 180px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .search-select-list.open { display: block; }
+
+    .search-option {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .search-option:hover, .search-option.active { background: var(--cream); }
+
+    .search-option mark {
+      background: rgba(193,68,14,0.18);
+      color: var(--rust);
+      border-radius: 2px;
+    }
+
+    /* ─── Toggle/Switch as select ─── */
+    .toggle-group {
+      display: flex;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      background: #fff;
+      border: none;
+      border-right: 1px solid var(--border);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .toggle-btn:last-child { border-right: none; }
+    .toggle-btn:hover { background: var(--cream); color: var(--ink); }
+    .toggle-btn.active { background: var(--ink); color: #fff; }
+
+    /* ─── Color swatch select ─── */
+    .swatch-group {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .swatch::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.picked { border-color: var(--ink); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+    .swatch.picked::after { opacity: 1; }
+
+    /* ─── Listbox ─── */
+    .listbox {
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      background: #fff;
+      min-width: 220px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .listbox-item {
+      padding: 0.55rem 0.85rem;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.1s;
+      border-bottom: 1px solid var(--cream);
+    }
+
+    .listbox-item:last-child { border-bottom: none; }
+    .listbox-item:hover { background: var(--cream); }
+    .listbox-item.selected { background: var(--forest); color: #fff; }
+    .listbox-item .check { opacity: 0; font-size: 0.7rem; }
+    .listbox-item.selected .check { opacity: 1; }
+
+    /* ─── Star rating as select ─── */
+    .star-rating {
+      display: flex;
+      gap: 0.25rem;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+
+    .star-rating input { display: none; }
+
+    .star-rating label {
+      font-size: 1.8rem;
+      color: var(--border);
+      cursor: pointer;
+      transition: color 0.1s, transform 0.1s;
+      min-width: auto;
+    }
+
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+      color: var(--gold);
+    }
+
+    .star-rating label:hover { transform: scale(1.2); }
+
+    /* ─── Range / slider select ─── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, var(--rust) 0%, var(--rust) var(--pct, 50%), var(--border) var(--pct, 50%));
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: #fff;
+      border: 2px solid var(--rust);
+      border-radius: 50%;
+      box-shadow: 0 1px 4px var(--shadow);
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+    .range-wrapper { width: 100%; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; font-family: 'JetBrains Mono', monospace; }
+    .range-value { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--rust); font-weight: 600; }
+
+    /* ─── Checkbox group ─── */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.85rem;
+    }
+
+    .check-item:hover { border-color: var(--slate); }
+    .check-item input[type="checkbox"] { accent-color: var(--forest); width: 15px; height: 15px; cursor: pointer; }
+    .check-item.ticked { border-color: var(--forest); background: rgba(45,90,39,0.04); }
+
+    /* ─── Code tag ─── */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      background: var(--cream);
+      color: var(--rust);
+      padding: 0.1em 0.35em;
+      border-radius: 2px;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.75rem;
+      color: var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      border-top: 1px solid var(--cream);
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">HTML · JavaScript · UI Components</p>
+  <h1>The <em>Complete</em> Select Field Guide</h1>
+  <p class="subtitle">Every variety of selection input, thoughtfully demonstrated — from native HTML to custom-crafted UI patterns.</p>
+</header>
+
+<main>
+
+  <!-- 1. Native Single Select -->
+  <div class="card">
+    <div class="card-label">Type 01</div>
+    <h2>Native Single <code>&lt;select&gt;</code></h2>
+    <p>The browser's built-in dropdown. Accessible by default, keyboard navigable, and zero-JS required.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label for="s1">Pick a continent</label>
+        <select id="s1">
+          <option value="">— choose one —</option>
+          <option value="af">Africa</option>
+          <option value="an">Antarctica</option>
+          <option value="as">Asia</option>
+          <option value="eu">Europe</option>
+          <option value="na">North America</option>
+          <option value="oc">Oceania</option>
+          <option value="sa">South America</option>
+        </select>
+      </div>
+      <div class="demo-row">
+        <label for="s1b">With <code>optgroup</code></label>
+        <select id="s1b">
+          <optgroup label="Warm Drinks">
+            <option>Coffee</option>
+            <option>Tea</option>
+            <option>Hot Chocolate</option>
+          </optgroup>
+          <optgroup label="Cold Drinks">
+            <option>Iced Coffee</option>
+            <option>Lemonade</option>
+            <option>Sparkling Water</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Native Multiple Select -->
+  <div class="card">
+    <div class="card-label">Type 02</div>
+    <h2>Native Multiple <code>&lt;select multiple&gt;</code></h2>
+    <p>Hold <code>Ctrl</code> / <code>Cmd</code> to pick more than one. A scrollable listbox rendered natively by the browser.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label for="s2">Favourite languages</label>
+        <select id="s2" multiple size="5">
+          <option>Python</option>
+          <option>JavaScript</option>
+          <option>Rust</option>
+          <option>Go</option>
+          <option>TypeScript</option>
+          <option>Haskell</option>
+          <option>Elixir</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Disabled / Read-only Select -->
+  <div class="card">
+    <div class="card-label">Type 03</div>
+    <h2>Disabled &amp; Pre-selected States</h2>
+    <p>Using the <code>disabled</code> attribute and pre-set <code>selected</code> values for non-interactive contexts.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>Disabled</label>
+        <select disabled>
+          <option>Cannot change this</option>
+        </select>
+      </div>
+      <div class="demo-row">
+        <label>Pre-selected</label>
+        <select>
+          <option>Celsius</option>
+          <option selected>Fahrenheit</option>
+          <option>Kelvin</option>
+        </select>
+      </div>
+      <div class="demo-row">
+        <label>Disabled option</label>
+        <select>
+          <option disabled>— unavailable —</option>
+          <option>Basic Plan</option>
+          <option>Pro Plan</option>
+          <option disabled>Enterprise (contact us)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Custom Dropdown -->
+  <div class="card">
+    <div class="card-label">Type 04</div>
+    <h2>Custom Styled Dropdown</h2>
+    <p>A fully custom <code>&lt;div&gt;</code>-based dropdown with keyboard support and colour-coded options.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>Status</label>
+        <div class="custom-select-wrapper" id="csw">
+          <button class="custom-select-btn" id="csBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="csValue">— choose status —</span>
+            <span class="custom-select-arrow"></span>
+          </button>
+          <div class="custom-select-dropdown" id="csDrop" role="listbox">
+            <div class="custom-option" data-val="active" role="option"><span class="dot" style="background:#2d5a27"></span> Active</div>
+            <div class="custom-option" data-val="pending" role="option"><span class="dot" style="background:#c89a2e"></span> Pending</div>
+            <div class="custom-option" data-val="paused" role="option"><span class="dot" style="background:#3d4a5c"></span> Paused</div>
+            <div class="custom-option" data-val="closed" role="option"><span class="dot" style="background:#c1440e"></span> Closed</div>
+            <div class="custom-option" data-val="archived" role="option"><span class="dot" style="background:#8a7f72"></span> Archived</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Searchable Select -->
+  <div class="card">
+    <div class="card-label">Type 05</div>
+    <h2>Searchable / Filterable Select</h2>
+    <p>Type to filter a long list. Highlights matching characters and updates results live.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>Country</label>
+        <div class="search-select-wrapper" id="ssw">
+          <input class="search-select-input" id="ssInput" type="text" placeholder="Type to search…" autocomplete="off" />
+          <div class="search-select-list" id="ssList" role="listbox"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Chip / Tag Multi-Select -->
+  <div class="card">
+    <div class="card-label">Type 06</div>
+    <h2>Chip / Tag Multi-Select</h2>
+    <p>Click to toggle pills. A tactile alternative to <code>&lt;select multiple&gt;</code>, great for filters and tagging.</p>
+    <div class="demo">
+      <div class="chip-select-wrapper" id="chipWrapper">
+        <div class="chip-pool" id="chipPool">
+          <span class="chip" data-val="design">Design</span>
+          <span class="chip" data-val="engineering">Engineering</span>
+          <span class="chip" data-val="product">Product</span>
+          <span class="chip" data-val="data">Data</span>
+          <span class="chip" data-val="research">Research</span>
+          <span class="chip" data-val="ops">Operations</span>
+          <span class="chip" data-val="finance">Finance</span>
+          <span class="chip" data-val="legal">Legal</span>
+        </div>
+        <div class="chip-selected-display" id="chipDisplay">None selected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Radio Group as Select -->
+  <div class="card">
+    <div class="card-label">Type 07</div>
+    <h2>Radio Group as Visible Select</h2>
+    <p>When options are few and always-visible clarity matters. Uses native <code>&lt;input type="radio"&gt;</code>.</p>
+    <div class="demo">
+      <div class="radio-group" id="radioGroup">
+        <label class="radio-option">
+          <input type="radio" name="plan" value="starter"> <span>Starter</span> <span class="tag">Free</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="plan" value="pro"> <span>Pro</span> <span class="tag">$12/mo</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="plan" value="team"> <span>Team</span> <span class="tag">$49/mo</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="plan" value="enterprise"> <span>Enterprise</span> <span class="tag">Custom</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Toggle / Segmented Control -->
+  <div class="card">
+    <div class="card-label">Type 08</div>
+    <h2>Segmented / Toggle Control</h2>
+    <p>Horizontal pill-style single-select, ideal for switching between 2–5 mutually exclusive views or modes.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>View</label>
+        <div class="toggle-group" role="group">
+          <button class="toggle-btn active" onclick="toggleSelect(this)">List</button>
+          <button class="toggle-btn" onclick="toggleSelect(this)">Grid</button>
+          <button class="toggle-btn" onclick="toggleSelect(this)">Map</button>
+        </div>
+      </div>
+      <div class="demo-row">
+        <label>Theme</label>
+        <div class="toggle-group" role="group">
+          <button class="toggle-btn active" onclick="toggleSelect(this)">Light</button>
+          <button class="toggle-btn" onclick="toggleSelect(this)">Dark</button>
+          <button class="toggle-btn" onclick="toggleSelect(this)">System</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Color Swatch Select -->
+  <div class="card">
+    <div class="card-label">Type 09</div>
+    <h2>Colour Swatch Select</h2>
+    <p>Visual option selection via swatches. Common in product configurators and palette pickers.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>Colour</label>
+        <div class="swatch-group" id="swatchGroup">
+          <span class="swatch" style="background:#c1440e" title="Rust" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#c89a2e" title="Gold" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#2d5a27" title="Forest" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#3d4a5c" title="Slate" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#7a5c99" title="Violet" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#1a7a8a" title="Teal" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#0f0e0d" title="Ink" onclick="pickSwatch(this)"></span>
+          <span class="swatch" style="background:#e8e0d5" title="Linen" onclick="pickSwatch(this)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Listbox -->
+  <div class="card">
+    <div class="card-label">Type 10</div>
+    <h2>Custom Listbox (Multi-select)</h2>
+    <p>A scrollable custom list with click-to-toggle selection and visible checkmarks. ARIA <code>role="listbox"</code>.</p>
+    <div class="demo">
+      <div class="listbox" role="listbox" aria-multiselectable="true" id="lbList">
+        <div class="listbox-item" role="option" onclick="toggleListbox(this)">🌍 Europe <span class="check">✓</span></div>
+        <div class="listbox-item selected" role="option" aria-selected="true" onclick="toggleListbox(this)">🌎 Americas <span class="check">✓</span></div>
+        <div class="listbox-item" role="option" onclick="toggleListbox(this)">🌏 Asia-Pacific <span class="check">✓</span></div>
+        <div class="listbox-item" role="option" onclick="toggleListbox(this)">🌍 Middle East <span class="check">✓</span></div>
+        <div class="listbox-item selected" role="option" aria-selected="true" onclick="toggleListbox(this)">🌍 Africa <span class="check">✓</span></div>
+        <div class="listbox-item" role="option" onclick="toggleListbox(this)">🏔 Central Asia <span class="check">✓</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Star Rating -->
+  <div class="card">
+    <div class="card-label">Type 11</div>
+    <h2>Star Rating Select</h2>
+    <p>Selection via star glyphs. CSS-only hover highlighting using the sibling combinator trick.</p>
+    <div class="demo">
+      <div class="demo-row">
+        <label>Your rating</label>
+        <div class="star-rating">
+          <input type="radio" id="s5" name="stars" value="5"><label for="s5" title="5 stars">★</label>
+          <input type="radio" id="s4" name="stars" value="4"><label for="s4" title="4 stars">★</label>
+          <input type="radio" id="s3" name="stars" value="3"><label for="s3" title="3 stars">★</label>
+          <input type="radio" id="s2r" name="stars" value="2"><label for="s2r" title="2 stars">★</label>
+          <input type="radio" id="s1r" name="stars" value="1"><label for="s1r" title="1 star">★</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. Range Slider -->
+  <div class="card">
+    <div class="card-label">Type 12</div>
+    <h2>Range Slider Select</h2>
+    <p>Continuous or stepped value selection using <code>&lt;input type="range"&gt;</code>. Styled with a CSS gradient track.</p>
+    <div class="demo">
+      <div style="display:flex; flex-direction:column; gap:1.25rem; width:100%;">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+            <label style="min-width:auto;">Budget</label>
+            <span class="range-value" id="rv1">$500</span>
+          </div>
+          <div class="range-wrapper">
+            <input type="range" id="r1" min="0" max="1000" value="500" step="50" oninput="updateRange(this,'rv1','$','')">
+            <div class="range-labels"><span>$0</span><span>$1,000</span></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+            <label style="min-width:auto;">Opacity</label>
+            <span class="range-value" id="rv2">50%</span>
+          </div>
+          <div class="range-wrapper">
+            <input type="range" id="r2" min="0" max="100" value="50" step="1" oninput="updateRange(this,'rv2','','%')">
+            <div class="range-labels"><span>0%</span><span>100%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. Checkbox Group -->
+  <div class="card">
+    <div class="card-label">Type 13</div>
+    <h2>Checkbox Group as Multi-Select</h2>
+    <p>Explicit tick-box UI for multi-selection. Each item is independently toggleable with <code>&lt;input type="checkbox"&gt;</code>.</p>
+    <div class="demo">
+      <div class="checkbox-grid" id="cbGroup">
+        <label class="check-item"><input type="checkbox" onchange="tickItem(this)"> Notifications</label>
+        <label class="check-item"><input type="checkbox" checked onchange="tickItem(this)"> Dark mode</label>
+        <label class="check-item"><input type="checkbox" onchange="tickItem(this)"> Analytics</label>
+        <label class="check-item"><input type="checkbox" checked onchange="tickItem(this)"> Auto-save</label>
+        <label class="check-item"><input type="checkbox" onchange="tickItem(this)"> Beta features</label>
+        <label class="check-item"><input type="checkbox" onchange="tickItem(this)"> Telemetry</label>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  All 13 select patterns — native HTML &amp; custom JS · No external libraries
+</footer>
+
+<script>
+  /* ── Custom Dropdown ── */
+  const csBtn = document.getElementById('csBtn');
+  const csDrop = document.getElementById('csDrop');
+  const csValue = document.getElementById('csValue');
+
+  csBtn.addEventListener('click', () => {
+    const open = csDrop.classList.toggle('open');
+    csBtn.classList.toggle('open', open);
+    csBtn.setAttribute('aria-expanded', open);
+  });
+
+  csDrop.querySelectorAll('.custom-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      csValue.textContent = opt.textContent.trim();
+      csDrop.classList.remove('open');
+      csBtn.classList.remove('open');
+      csBtn.setAttribute('aria-expanded', false);
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('csw').contains(e.target)) {
+      csDrop.classList.remove('open');
+      csBtn.classList.remove('open');
+    }
+  });
+
+  /* ── Searchable Select ── */
+  const countries = ['Afghanistan','Albania','Algeria','Argentina','Australia','Austria','Bangladesh','Belgium','Brazil','Canada','Chile','China','Colombia','Croatia','Czech Republic','Denmark','Egypt','Ethiopia','Finland','France','Germany','Ghana','Greece','Hungary','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Japan','Jordan','Kenya','Malaysia','Mexico','Morocco','Myanmar','Nepal','Netherlands','New Zealand','Nigeria','Norway','Pakistan','Peru','Philippines','Poland','Portugal','Romania','Russia','Saudi Arabia','Senegal','Serbia','Singapore','South Africa','South Korea','Spain','Sri Lanka','Sweden','Switzerland','Tanzania','Thailand','Turkey','Uganda','Ukraine','United Kingdom','United States','Uruguay','Venezuela','Vietnam','Zimbabwe'];
+
+  const ssInput = document.getElementById('ssInput');
+  const ssList = document.getElementById('ssList');
+
+  ssInput.addEventListener('focus', () => renderList(''));
+  ssInput.addEventListener('input', () => renderList(ssInput.value));
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('ssw').contains(e.target)) ssList.classList.remove('open');
+  });
+
+  function renderList(q) {
+    const qLow = q.toLowerCase();
+    const filtered = countries.filter(c => c.toLowerCase().includes(qLow)).slice(0, 8);
+    ssList.innerHTML = filtered.length
+      ? filtered.map(c => `<div class="search-option" role="option">${highlight(c, q)}</div>`).join('')
+      : '<div class="search-option" style="color:var(--muted);cursor:default">No results</div>';
+    ssList.classList.add('open');
+    ssList.querySelectorAll('.search-option').forEach(el => {
+      el.addEventListener('click', () => {
+        ssInput.value = el.textContent;
+        ssList.classList.remove('open');
+      });
+    });
+  }
+
+  function highlight(text, q) {
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return text.slice(0, idx) + `<mark>${text.slice(idx, idx + q.length)}</mark>` + text.slice(idx + q.length);
+  }
+
+  /* ── Chip Multi-Select ── */
+  const chipDisplay = document.getElementById('chipDisplay');
+  document.getElementById('chipPool').querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      updateChipDisplay();
+    });
+  });
+
+  function updateChipDisplay() {
+    const sel = [...document.querySelectorAll('.chip.selected')].map(c => c.dataset.val);
+    chipDisplay.textContent = sel.length ? 'Selected: ' + sel.join(', ') : 'None selected';
+  }
+
+  /* ── Toggle/Segmented ── */
+  function toggleSelect(btn) {
+    const group = btn.closest('.toggle-group');
+    group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  /* ── Swatch Select ── */
+  function pickSwatch(el) {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('picked'));
+    el.classList.add('picked');
+  }
+
+  /* ── Listbox ── */
+  function toggleListbox(item) {
+    item.classList.toggle('selected');
+    item.setAttribute('aria-selected', item.classList.contains('selected'));
+  }
+
+  /* ── Range Slider ── */
+  function updateRange(input, labelId, prefix, suffix) {
+    document.getElementById(labelId).textContent = prefix + input.value + suffix;
+    const pct = ((input.value - input.min) / (input.max - input.min) * 100).toFixed(1) + '%';
+    input.style.setProperty('--pct', pct);
+  }
+
+  // Init range styles
+  document.querySelectorAll('input[type="range"]').forEach(r => {
+    const pct = ((r.value - r.min) / (r.max - r.min) * 100).toFixed(1) + '%';
+    r.style.setProperty('--pct', pct);
+  });
+
+  /* ── Checkbox Group ── */
+  function tickItem(cb) {
+    const label = cb.closest('.check-item');
+    label.classList.toggle('ticked', cb.checked);
+  }
+
+  // Init checked checkboxes
+  document.querySelectorAll('.check-item input[type="checkbox"]:checked').forEach(cb => {
+    cb.closest('.check-item').classList.add('ticked');
+  });
+
+  /* ── Radio Group ── */
+  document.querySelectorAll('.radio-option input[type="radio"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('chosen'));
+      if (r.checked) r.closest('.radio-option').classList.add('chosen');
+    });
+  });
+</script>
+
+</body>
+</html>
