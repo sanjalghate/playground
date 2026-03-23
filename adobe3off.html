@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="utf-8">
+  <title>Workflow Orchestration</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface-raised: #18181f;
+      --border: rgba(255,255,255,0.08);
+      --border-bright: rgba(255,255,255,0.18);
+      --text-primary: #f0eff7;
+      --text-secondary: #8e8da8;
+      --text-muted: #555470;
+      --accent: #e8603c;
+      --accent-glow: rgba(232,96,60,0.18);
+      --gold: #c9a96e;
+      --gold-pale: rgba(201,169,110,0.12);
+      --promo: #2a1f3d;
+      --promo-text: #b89af5;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    html { background: var(--bg); color: var(--text-primary); font-family: var(--font-body); }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,96,60,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(100,80,180,0.06) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    /* ── Layout ── */
+    .page-shell {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── Header ── */
+    .header-bar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 20px 0 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .close-btn:hover { border-color: var(--border-bright); color: var(--text-primary); background: rgba(255,255,255,0.04); }
+
+    /* ── Heading ── */
+    .page-heading {
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-size: clamp(2rem, 5vw, 3rem);
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      text-align: center;
+      margin: 48px 0 8px;
+      line-height: 1.15;
+    }
+    .page-heading em { font-style: italic; color: var(--gold); }
+
+    /* ── Toggle ── */
+    .toggle-group {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin: 32px 0 48px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 400;
+      padding: 8px 18px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+      white-space: nowrap;
+    }
+    .toggle-btn[aria-checked="true"] {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+      border: 1px solid var(--border-bright);
+    }
+    .toggle-btn:hover:not([aria-checked="true"]) { color: var(--text-secondary); }
+
+    /* ── Cards ── */
+    .cards-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      list-style: none;
+    }
+
+    @media (max-width: 620px) {
+      .cards-list { grid-template-columns: 1fr; }
+    }
+
+    .card-item { position: relative; }
+
+    .card-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color .3s, transform .3s, box-shadow .3s;
+      height: 100%;
+    }
+    .card-wrapper:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-3px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .card-wrapper.featured {
+      border-color: rgba(201,169,110,0.3);
+      background: linear-gradient(160deg, rgba(201,169,110,0.04) 0%, var(--surface) 50%);
+    }
+    .card-wrapper.featured:hover {
+      border-color: rgba(201,169,110,0.5);
+      box-shadow: 0 20px 60px rgba(201,169,110,0.08);
+    }
+
+    /* Promo banner */
+    .promo-banner {
+      background: var(--promo);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+    .promo-text { color: var(--promo-text); font-weight: 500; }
+    .promo-terms { color: rgba(184,154,245,0.6); cursor: pointer; transition: color .2s; }
+    .promo-terms:hover { color: var(--promo-text); }
+
+    /* Card inner */
+    .card-inner { padding: 24px; }
+
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .card-icon.ilst { background: linear-gradient(135deg, #ff9a00, #ff6520); }
+    .card-icon.cc   { background: linear-gradient(135deg, #da1f26, #a0333a); }
+
+    .card-title-block { flex: 1; }
+    .card-title {
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .badge-best {
+      display: inline-block;
+      background: var(--gold-pale);
+      color: var(--gold);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-top: 4px;
+    }
+
+    /* Pricing */
+    .pricing-block { margin-bottom: 20px; }
+    .price-strike {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+      letter-spacing: -0.02em;
+    }
+    .price-main {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      line-height: 1;
+      margin: 4px 0;
+    }
+    .price-currency { font-size: 14px; font-weight: 300; color: var(--text-secondary); margin-top: 4px; }
+    .price-integer { font-family: var(--font-display); font-size: 48px; font-weight: 300; color: var(--text-primary); letter-spacing: -0.03em; }
+    .price-decimals-wrap { display: flex; flex-direction: column; margin-bottom: 4px; }
+    .price-decimals { font-size: 18px; font-weight: 400; color: var(--text-primary); }
+    .price-recurrence { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
+    .cancellation-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+    }
+
+    /* CTA */
+    .cta-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: opacity .2s, transform .15s;
+    }
+    .cta-btn:hover { opacity: 0.88; transform: scale(0.99); }
+    .cta-btn.standard { background: var(--accent); color: #fff; }
+    .cta-btn.featured-cta { background: var(--gold); color: #0a0a0f; }
+
+    /* Sections */
+    .card-section { margin-bottom: 20px; }
+    .section-label {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .rec-list { list-style: none; }
+    .rec-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+    .rec-list li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+    }
+
+    /* Firefly */
+    .firefly-block {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      margin-bottom: 20px;
+    }
+    .firefly-block a { color: var(--promo-text); text-decoration: none; }
+    .firefly-block a:hover { text-decoration: underline; }
+    .firefly-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Included apps */
+    .apps-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .app-icon-pill {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .more-apps {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Divider */
+    .card-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 0 20px;
+    }
+
+    /* ── Footer Card ── */
+    .footer-card {
+      margin-top: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: border-color .3s;
+    }
+    .footer-card:hover { border-color: var(--border-bright); }
+
+    .footer-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, #da1f26, #a0333a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .footer-text { flex: 1; }
+    .footer-heading {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 18px;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .footer-btn {
+      background: none;
+      border: 1px solid var(--border-bright);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 8px 20px;
+      border-radius: 100px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s, border-color .2s;
+      flex-shrink: 0;
+    }
+    .footer-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.3); }
+
+    @media (max-width: 480px) {
+      .footer-card { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page-heading { animation: fadeUp .5s ease both; }
+    .toggle-group  { animation: fadeUp .5s .1s ease both; }
+    .cards-list    { animation: fadeUp .5s .2s ease both; }
+    .footer-card   { animation: fadeUp .5s .3s ease both; }
+  </style>
+</head>
+<body>
+
+<div class="page-shell">
+
+  <!-- Header -->
+  <div class="header-bar" data-testid="header-view-grid-area">
+    <button class="close-btn" data-testid="close-button" aria-label="Close" type="button">✕</button>
+  </div>
+
+  <!-- Main Content -->
+  <div data-testid="main-content-area">
+    <div data-testid="consumer-content-area">
+      <div data-testid="full-width-container">
+
+        <!-- Page Heading -->
+        <h2 class="page-heading" data-testid="focused-multicard-heading">
+          Choose the plan <em>that's right</em> for you
+        </h2>
+
+        <!-- Commitment Toggle -->
+        <div class="toggle-group" aria-label="commitment-toggle" role="radiogroup">
+          <button class="toggle-btn" role="radio" aria-checked="false" type="button">Monthly</button>
+          <button class="toggle-btn" role="radio" aria-checked="true" data-selected="true" type="button">Annual, billed monthly</button>
+          <button class="toggle-btn" role="radio" aria-checked="false" type="button">Annual, prepaid</button>
+        </div>
+
+        <!-- Offer Cards -->
+        <div class="cards-list" role="list">
+
+          <!-- Card 1: Illustrator -->
+          <div class="card-item" role="listitem"
+               data-resolved-variables='{"productName":"Illustrator","fireflyCredits":"25"}'>
+            <div class="card-wrapper" role="article" data-testid="offer-card">
+              <div class="card-inner">
+
+                <div class="card-header" role="group">
+                  <div class="card-icon ilst">🖊</div>
+                  <div class="card-title-block">
+                    <h3 class="card-title" aria-label="Illustrator" data-testid="card-header-title-container">
+                      Illustrator
+                    </h3>
+                  </div>
+                </div>
+
+                <div class="pricing-block">
+                  <span aria-label="US$22.99 per month">
+                    <div class="price-main" data-testid="price-full-display">
+                      <span class="price-currency" data-testid="price-currency-symbol-before">US$</span>
+                      <span class="price-integer" data-testid="price-integer">22</span>
+                      <div class="price-decimals-wrap">
+                        <span class="price-decimals" data-testid="price-decimals">.99</span>
+                        <span class="price-recurrence" data-testid="price-recurrence">/mo</span>
+                      </div>
+                    </div>
+                  </span>
+                  <p class="cancellation-note" data-testid="cancellation-disclaimer-container">
+                    Fee applies of half your remaining annual commitment if you cancel after Apr 02
+                  </p>
+                </div>
+
+                <button class="cta-btn standard" data-testid="cta-button-label" aria-label="Buy now, Illustrator" type="button">
+                  Buy now
+                </button>
+
+                <div class="card-divider"></div>
+
+                <div class="card-section">
+                  <div class="section-label">Recommended for</div>
+                  <ul class="rec-list" aria-label="Recommended for">
+                    <li>Illustration</li>
+                    <li>Drawing and painting</li>
+                    <li>Typography</li>
+                  </ul>
+                </div>
+
+                <div class="firefly-block" data-testid="block-fireflyCredits">
+                  +25 monthly <a href="#" target="_blank">generative credits</a>
+                </div>
+
+                <div class="card-section" data-testid="block-includedApps">
+                  <div class="section-label">Included apps</div>
+                  <div class="apps-row" role="list">
+                    <div class="app-icon-pill" role="listitem" title="Illustrator">Ai</div>
+                    <div class="app-icon-pill" role="listitem" title="Adobe Express">Xp</div>
+                    <div class="app-icon-pill" role="listitem" title="Adobe Firefly">Ff</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Creative Cloud Pro -->
+          <div class="card-item" role="listitem"
+               data-resolved-variables='{"productName":"Creative Cloud Pro","fireflyCredits":"4000"}'>
+            <div class="card-wrapper featured" role="article" data-testid="offer-card">
+
+              <!-- Promo Banner -->
+              <div class="promo-banner" data-testid="badges-applied-promotion-banner">
+                <span class="promo-text">50% off for 3 months</span>
+                <span class="promo-terms" role="button" data-testid="badges-applied-promotion-terms-link">View terms</span>
+              </div>
+
+              <div class="card-inner">
+
+                <div class="card-header" role="group">
+                  <div class="card-icon cc">Cc</div>
+                  <div class="card-title-block">
+                    <h3 class="card-title" aria-label="Creative Cloud Pro, Best value, 50% off for 3 months"
+                        data-testid="card-header-title-container">
+                      Creative Cloud Pro
+                    </h3>
+                    <div class="badge-best" data-testid="badges-applied-promotion">Best value</div>
+                  </div>
+                </div>
+
+                <div class="pricing-block">
+                  <div class="price-strike" data-testid="strikethrough-price" aria-label="US$69.99 per month">
+                    US$69.99/mo
+                  </div>
+                  <span aria-label="US$34.99 per month">
+                    <div class="price-main">
+                      <span class="price-currency" data-testid="price-currency-symbol-before">US$</span>
+                      <span class="price-integer" data-testid="price-integer">34</span>
+                      <div class="price-decimals-wrap">
+                        <span class="price-decimals" data-testid="price-decimals">.99</span>
+                        <span class="price-recurrence" data-testid="price-recurrence">/mo</span>
+                      </div>
+                    </div>
+                  </span>
+                  <p class="cancellation-note" data-testid="cancellation-disclaimer-container">
+                    Fee applies of half your remaining annual commitment if you cancel after Apr 02
+                  </p>
+                </div>
+
+                <button class="cta-btn featured-cta" data-testid="cta-button-label" aria-label="Buy now, Creative Cloud Pro" type="button">
+                  Buy now
+                </button>
+
+                <div class="card-divider"></div>
+
+                <div class="card-section">
+                  <div class="section-label">Recommended for</div>
+                  <ul class="rec-list" aria-label="Recommended for">
+                    <li>Photo, design, video, and more</li>
+                    <li>Workflows that use multiple creative apps</li>
+                    <li>Creative AI for images, video, and audio</li>
+                  </ul>
+                </div>
+
+                <div class="firefly-block" data-testid="block-fireflyCredits">
+                  4000 monthly <a href="#" target="_blank">generative credits</a>
+                  <div class="firefly-sub">for premium creative AI video and audio features</div>
+                </div>
+
+                <div class="card-section" data-testid="block-includedApps">
+                  <div class="section-label">Included apps</div>
+                  <div class="apps-row" role="list">
+                    <div class="app-icon-pill" role="listitem" title="Photoshop">Ps</div>
+                    <div class="app-icon-pill" role="listitem" title="Illustrator">Ai</div>
+                    <div class="app-icon-pill" role="listitem" title="Premiere">Pr</div>
+                    <div class="app-icon-pill" role="listitem" title="Acrobat Pro">Ac</div>
+                    <div class="app-icon-pill" role="listitem" title="InDesign">Id</div>
+                    <span class="more-apps">+ 21 more apps</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- End Offer Cards -->
+
+        <!-- Footer -->
+        <div class="footer-card" data-testid="focused-multicard-footer-card-wrapper">
+          <div class="footer-icon">Cc</div>
+          <div class="footer-text">
+            <h3 class="footer-heading">Explore student and teacher discounts for Creative Cloud Pro</h3>
+          </div>
+          <button class="footer-btn" type="button">View pricing</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Toggle radio buttons
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-btn').forEach(b => b.setAttribute('aria-checked', 'false'));
+      btn.setAttribute('aria-checked', 'true');
+    });
+  });
+</script>
+
+</body>
+</html>
