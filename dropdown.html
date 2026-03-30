@@ -99,7 +99,7 @@
   /* ── DROPDOWN MENU ── */
   .dd-menu {
     position: absolute; top: calc(100% + 8px); left: 0;
-    min-width: 240px;
+    min-width: 260px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -121,6 +121,8 @@
     padding: 10px 16px 8px;
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 2;
+    background: var(--surface);
   }
   .dd-header span {
     font-size: 0.68rem;
@@ -133,17 +135,71 @@
     font-weight: 500;
   }
 
+  /* ── SCROLLABLE LIST ── */
+  .dd-list-wrap { position: relative; }
+  .dd-list-wrap::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 4px;
+    height: 36px;
+    background: linear-gradient(to bottom, transparent, var(--surface));
+    pointer-events: none;
+    transition: opacity .25s;
+    z-index: 1;
+  }
+  .dd-list-wrap.at-bottom::after { opacity: 0; }
+
+  .dd-list {
+    max-height: 168px; /* ~4 items at 42px each */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .dd-list::-webkit-scrollbar { width: 4px; }
+  .dd-list::-webkit-scrollbar-track { background: transparent; }
+  .dd-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .dd-list::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .dd-list { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+  .dd-footer {
+    padding: 7px 16px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dd-footer .count { font-size: 0.65rem; color: var(--muted); }
+  .dd-footer .scroll-nudge {
+    font-size: 0.65rem; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .dd-footer .scroll-nudge svg { animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 0%,100%{transform:translateY(0)} 55%{transform:translateY(3px)} }
+
   .dd-item {
     display: flex; align-items: center; gap: 12px;
-    padding: 11px 16px;
+    padding: 0 16px;
+    height: 42px;
     font-size: 0.82rem;
     color: var(--text);
     cursor: pointer;
     border: none; background: none; width: 100%; text-align: left;
     transition: background .15s, color .15s;
+    flex-shrink: 0;
   }
+  .dd-item + .dd-item { border-top: 1px solid rgba(42,42,62,0.55); }
   .dd-item:hover { background: rgba(200,240,74,0.07); color: var(--accent); }
-  .dd-item .icon { font-size: 1rem; min-width: 20px; text-align: center; }
+  .dd-item .icon { font-size: 0.95rem; min-width: 20px; text-align: center; }
+  .dd-item .label { flex: 1; }
+  .dd-item .badge {
+    font-size: 0.58rem; padding: 1px 7px; border-radius: 100px;
+    background: rgba(200,240,74,0.1); color: var(--accent);
+    border: 1px solid rgba(200,240,74,0.18);
+  }
+  .dd-item .badge.new {
+    background: rgba(74,240,200,0.1); color: var(--accent2);
+    border-color: rgba(74,240,200,0.2);
+  }
+  .dd-item .badge.hot {
+    background: rgba(240,74,74,0.1); color: #f08a4a;
+    border-color: rgba(240,120,74,0.2);
+  }
 
   /* ── STATUS LOG ── */
   .status-section {
@@ -256,18 +312,49 @@
           <span>Closes on scroll &amp; timer</span>
           <span class="countdown" id="cd1"></span>
         </div>
-        <button class="dd-item" onclick="log('Clicked: Analytics')">
-          <span class="icon">📊</span> Analytics
-        </button>
-        <button class="dd-item" onclick="log('Clicked: Dashboard')">
-          <span class="icon">🖥️</span> Dashboard
-        </button>
-        <button class="dd-item" onclick="log('Clicked: Reports')">
-          <span class="icon">📋</span> Reports
-        </button>
-        <button class="dd-item" onclick="log('Clicked: Settings')">
-          <span class="icon">⚙️</span> Settings
-        </button>
+        <div class="dd-list-wrap" id="wrap1">
+          <div class="dd-list" id="list1">
+            <button class="dd-item" onclick="log('Clicked: Analytics')">
+              <span class="icon">📊</span><span class="label">Analytics</span><span class="badge">Pro</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Dashboard')">
+              <span class="icon">🖥️</span><span class="label">Dashboard</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Reports')">
+              <span class="icon">📋</span><span class="label">Reports</span><span class="badge new">New</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Data Explorer')">
+              <span class="icon">🔭</span><span class="label">Data Explorer</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Pipelines')">
+              <span class="icon">🔁</span><span class="label">Pipelines</span><span class="badge hot">Hot</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Alerts')">
+              <span class="icon">🔔</span><span class="label">Alerts</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Integrations')">
+              <span class="icon">🔌</span><span class="label">Integrations</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: API Access')">
+              <span class="icon">⚡</span><span class="label">API Access</span><span class="badge">Pro</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Audit Log')">
+              <span class="icon">🗂️</span><span class="label">Audit Log</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Settings')">
+              <span class="icon">⚙️</span><span class="label">Settings</span>
+            </button>
+          </div>
+        </div>
+        <div class="dd-footer">
+          <span class="count">10 items</span>
+          <span class="scroll-nudge">
+            scroll to see more
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2 4 5 7 8 4"/>
+            </svg>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -283,15 +370,49 @@
           <span>Auto-close active</span>
           <span class="countdown" id="cd2"></span>
         </div>
-        <button class="dd-item" onclick="log('Clicked: Enterprise')">
-          <span class="icon">🏢</span> Enterprise
-        </button>
-        <button class="dd-item" onclick="log('Clicked: Startup')">
-          <span class="icon">🚀</span> Startup
-        </button>
-        <button class="dd-item" onclick="log('Clicked: Open Source')">
-          <span class="icon">🔓</span> Open Source
-        </button>
+        <div class="dd-list-wrap" id="wrap2">
+          <div class="dd-list" id="list2">
+            <button class="dd-item" onclick="log('Clicked: Enterprise')">
+              <span class="icon">🏢</span><span class="label">Enterprise</span><span class="badge">Pro</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Startup')">
+              <span class="icon">🚀</span><span class="label">Startup</span><span class="badge new">New</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Open Source')">
+              <span class="icon">🔓</span><span class="label">Open Source</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Education')">
+              <span class="icon">🎓</span><span class="label">Education</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Healthcare')">
+              <span class="icon">🏥</span><span class="label">Healthcare</span><span class="badge hot">Hot</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Finance')">
+              <span class="icon">💹</span><span class="label">Finance</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Retail')">
+              <span class="icon">🛍️</span><span class="label">Retail</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Government')">
+              <span class="icon">🏛️</span><span class="label">Government</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Non-profit')">
+              <span class="icon">🤝</span><span class="label">Non-profit</span>
+            </button>
+            <button class="dd-item" onclick="log('Clicked: Developer')">
+              <span class="icon">👨‍💻</span><span class="label">Developer</span>
+            </button>
+          </div>
+        </div>
+        <div class="dd-footer">
+          <span class="count">10 items</span>
+          <span class="scroll-nudge">
+            scroll to see more
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2 4 5 7 8 4"/>
+            </svg>
+          </span>
+        </div>
       </div>
     </div>
   </nav>
@@ -451,6 +572,15 @@
       scrollTicking = true;
     }
   }, { passive: true });
+
+  /* ── Update fade gradient as inner list scrolls ── */
+  document.querySelectorAll('.dd-list').forEach(list => {
+    const wrap = list.closest('.dd-list-wrap');
+    list.addEventListener('scroll', () => {
+      const atBottom = list.scrollHeight - list.scrollTop <= list.clientHeight + 4;
+      wrap.classList.toggle('at-bottom', atBottom);
+    });
+  });
 
   /* ── close on outside click ── */
   document.addEventListener('click', (e) => {
