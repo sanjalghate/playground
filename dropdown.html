@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Dropdown — Auto-Close & Scroll-Close</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141e;
+    --border: #2a2a3e;
+    --accent: #c8f04a;
+    --accent2: #4af0c8;
+    --text: #e8e8f0;
+    --muted: #6b6b88;
+    --danger: #f04a4a;
+    --radius: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 200vh;
+    overflow-x: hidden;
+  }
+
+  /* ── noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* ── header ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+    height: 68px;
+    background: rgba(10,10,15,0.88);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  nav { display: flex; gap: 8px; }
+
+  /* ── DROPDOWN TRIGGER ── */
+  .dd-wrap { position: relative; }
+
+  .dd-trigger {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    user-select: none;
+  }
+  .dd-trigger:hover { border-color: var(--accent); background: #1a1a28; }
+  .dd-trigger.open  { border-color: var(--accent); color: var(--accent); }
+
+  .dd-arrow {
+    width: 12px; height: 12px;
+    transition: transform .25s;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .dd-trigger.open .dd-arrow { transform: rotate(180deg); }
+
+  /* ── TIMER BAR ── */
+  .timer-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform-origin: left;
+    transform: scaleX(1);
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: none;
+  }
+
+  /* ── DROPDOWN MENU ── */
+  .dd-menu {
+    position: absolute; top: calc(100% + 8px); left: 0;
+    min-width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .dd-menu.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+  }
+
+  .dd-header {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dd-header span {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em;
+  }
+  .dd-header .countdown {
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .dd-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    border: none; background: none; width: 100%; text-align: left;
+    transition: background .15s, color .15s;
+  }
+  .dd-item:hover { background: rgba(200,240,74,0.07); color: var(--accent); }
+  .dd-item .icon { font-size: 1rem; min-width: 20px; text-align: center; }
+
+  /* ── STATUS LOG ── */
+  .status-section {
+    position: relative; z-index: 1;
+    max-width: 780px; margin: 60px auto; padding: 0 24px;
+  }
+
+  .section-label {
+    font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .12em; margin-bottom: 16px;
+  }
+
+  .log-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    min-height: 160px;
+    font-size: 0.78rem;
+    line-height: 1.7;
+  }
+
+  .log-entry {
+    display: flex; gap: 12px; align-items: baseline;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateX(-4px); } }
+
+  .log-time { color: var(--muted); min-width: 56px; }
+  .log-msg  { color: var(--text); }
+  .log-msg.scroll { color: var(--accent2); }
+  .log-msg.timer  { color: var(--accent); }
+  .log-msg.open   { color: #a0e0ff; }
+  .log-msg.close  { color: var(--danger); }
+
+  /* ── BEHAVIOR CARDS ── */
+  .cards {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    max-width: 780px; margin: 0 auto 80px; padding: 0 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .card-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 12px;
+  }
+  .card-tag.scroll { background: rgba(74,240,200,0.15); color: var(--accent2); }
+  .card-tag.timer  { background: rgba(200,240,74,0.15); color: var(--accent); }
+
+  .card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem; margin-bottom: 8px;
+  }
+  .card p { font-size: 0.78rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── SCROLL DUMMY ── */
+  .scroll-hint {
+    position: relative; z-index: 1;
+    text-align: center; padding: 80px 24px;
+    color: var(--muted); font-size: 0.78rem;
+  }
+  .scroll-hint strong { color: var(--accent2); display: block; font-size: 1.1rem; margin-bottom: 6px; }
+  .bounce { animation: bounce 1.6s infinite; display: inline-block; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+  /* second button style */
+  .dd-trigger2 {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .dd-trigger2:hover { border-color: var(--accent2); color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo">Smart∆Drop</div>
+
+  <nav>
+    <!-- Primary dropdown (has BOTH behaviors) -->
+    <div class="dd-wrap" id="dd1">
+      <button class="dd-trigger" id="trig1" onclick="toggleDrop('dd1')">
+        <span>Products</span>
+        <svg class="dd-arrow" viewBox="0 0 16 16"><polyline points="4 6 8 10 12 6"/></svg>
+      </button>
+      <div class="dd-menu" id="menu1">
+        <div class="timer-bar" id="bar1"></div>
+        <div class="dd-header">
+          <span>Closes on scroll &amp; timer</span>
+          <span class="countdown" id="cd1"></span>
+        </div>
+        <button class="dd-item" onclick="log('Clicked: Analytics')">
+          <span class="icon">📊</span> Analytics
+        </button>
+        <button class="dd-item" onclick="log('Clicked: Dashboard')">
+          <span class="icon">🖥️</span> Dashboard
+        </button>
+        <button class="dd-item" onclick="log('Clicked: Reports')">
+          <span class="icon">📋</span> Reports
+        </button>
+        <button class="dd-item" onclick="log('Clicked: Settings')">
+          <span class="icon">⚙️</span> Settings
+        </button>
+      </div>
+    </div>
+
+    <!-- Second dropdown -->
+    <div class="dd-wrap" id="dd2">
+      <button class="dd-trigger2" id="trig2" onclick="toggleDrop('dd2')">
+        <span>Solutions</span>
+        <svg class="dd-arrow" viewBox="0 0 16 16"><polyline points="4 6 8 10 12 6"/></svg>
+      </button>
+      <div class="dd-menu" id="menu2">
+        <div class="timer-bar" id="bar2"></div>
+        <div class="dd-header">
+          <span>Auto-close active</span>
+          <span class="countdown" id="cd2"></span>
+        </div>
+        <button class="dd-item" onclick="log('Clicked: Enterprise')">
+          <span class="icon">🏢</span> Enterprise
+        </button>
+        <button class="dd-item" onclick="log('Clicked: Startup')">
+          <span class="icon">🚀</span> Startup
+        </button>
+        <button class="dd-item" onclick="log('Clicked: Open Source')">
+          <span class="icon">🔓</span> Open Source
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- ══ BEHAVIOR CARDS ══ -->
+<div class="cards" style="margin-top:48px;">
+  <div class="card">
+    <span class="card-tag scroll">Behavior 1</span>
+    <h3>Closes on Scroll</h3>
+    <p>A <code>scroll</code> event listener on <code>window</code> immediately closes any open dropdown the moment the page begins to scroll. Open a menu, then scroll down to see it vanish.</p>
+  </div>
+  <div class="card">
+    <span class="card-tag timer">Behavior 2</span>
+    <h3>Auto-Close Timer</h3>
+    <p>After opening, the dropdown runs a 4-second countdown. The shrinking progress bar visualises the timer. If not interacted with, it removes itself from the DOM automatically.</p>
+  </div>
+</div>
+
+<!-- ══ LOG ══ -->
+<div class="status-section">
+  <p class="section-label">Event Log</p>
+  <div class="log-box" id="logBox">
+    <div class="log-entry">
+      <span class="log-time">—</span>
+      <span class="log-msg">Waiting for interaction…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCROLL HINT ══ -->
+<div class="scroll-hint">
+  <strong><span class="bounce">↓</span> Scroll down</strong>
+  Open a dropdown, then scroll to trigger behavior #1
+</div>
+
+<script>
+  const AUTO_CLOSE_MS = 4000;
+
+  const state = {
+    active: null,      // id of open dd-wrap
+    timer: null,       // countdown interval
+    startTime: null,
+  };
+
+  /* ── helpers ── */
+  function now() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  }
+
+  function log(msg, type='') {
+    const box = document.getElementById('logBox');
+    // remove placeholder
+    const ph = box.querySelector('.log-entry');
+    if (ph && ph.querySelector('.log-time').textContent === '—') ph.remove();
+
+    const el = document.createElement('div');
+    el.className = 'log-entry';
+    el.innerHTML = `<span class="log-time">${now()}</span><span class="log-msg ${type}">${msg}</span>`;
+    box.prepend(el);
+
+    // keep max 12 entries
+    while (box.children.length > 12) box.removeChild(box.lastChild);
+  }
+
+  /* ── open / close ── */
+  function openDrop(id) {
+    closeDrop(false); // close any other
+
+    const wrap  = document.getElementById(id);
+    const trig  = wrap.querySelector('.dd-trigger, .dd-trigger2');
+    const menu  = wrap.querySelector('.dd-menu');
+    const bar   = wrap.querySelector('.timer-bar');
+    const cd    = wrap.querySelector('.countdown');
+
+    trig.classList.add('open');
+    menu.classList.add('open');
+    state.active = id;
+    state.startTime = Date.now();
+
+    log(`▶ Opened "${id}"`, 'open');
+
+    // animate timer bar
+    bar.style.transition = 'none';
+    bar.style.transform  = 'scaleX(1)';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transition = `transform ${AUTO_CLOSE_MS}ms linear`;
+        bar.style.transform  = 'scaleX(0)';
+      });
+    });
+
+    // countdown display
+    let rem = Math.ceil(AUTO_CLOSE_MS / 1000);
+    cd.textContent = `${rem}s`;
+    state.timer = setInterval(() => {
+      const elapsed = Date.now() - state.startTime;
+      rem = Math.max(0, Math.ceil((AUTO_CLOSE_MS - elapsed) / 1000));
+      cd.textContent = `${rem}s`;
+    }, 200);
+
+    // auto-close after timer
+    state.autoClose = setTimeout(() => {
+      if (state.active === id) {
+        log('⏱ Auto-close timer fired — dropdown removed', 'timer');
+        closeDrop(true);
+      }
+    }, AUTO_CLOSE_MS);
+  }
+
+  function closeDrop(logged = true) {
+    if (!state.active) return;
+
+    const id   = state.active;
+    const wrap = document.getElementById(id);
+    if (!wrap) return;
+
+    const trig = wrap.querySelector('.dd-trigger, .dd-trigger2');
+    const menu = wrap.querySelector('.dd-menu');
+    const bar  = wrap.querySelector('.timer-bar');
+    const cd   = wrap.querySelector('.countdown');
+
+    trig.classList.remove('open');
+    menu.classList.remove('open');
+    bar.style.transition = 'none';
+    bar.style.transform  = 'scaleX(0)';
+    cd.textContent = '';
+
+    clearInterval(state.timer);
+    clearTimeout(state.autoClose);
+    state.active    = null;
+    state.timer     = null;
+    state.autoClose = null;
+  }
+
+  function toggleDrop(id) {
+    if (state.active === id) {
+      log(`✕ Closed "${id}" by click`, 'close');
+      closeDrop(true);
+    } else {
+      openDrop(id);
+    }
+  }
+
+  /* ── BEHAVIOR 1: close on scroll ── */
+  let scrollTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+      requestAnimationFrame(() => {
+        if (state.active) {
+          log(`↕ Scroll detected — dropdown closed (scrollY: ${Math.round(window.scrollY)}px)`, 'scroll');
+          closeDrop(true);
+        }
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+
+  /* ── close on outside click ── */
+  document.addEventListener('click', (e) => {
+    if (!state.active) return;
+    const wrap = document.getElementById(state.active);
+    if (wrap && !wrap.contains(e.target)) {
+      log('✕ Outside click — dropdown closed', 'close');
+      closeDrop(true);
+    }
+  });
+</script>
+</body>
+</html>
