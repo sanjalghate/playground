@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Links Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'> <text y='0.9em' font-size='90'>⭐</text></svg>">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #f5f0e8;
+    --cream: #ede7d9;
+    --rust: #c1440e;
+    --gold: #c89a2e;
+    --forest: #2d5a27;
+    --slate: #3d4a5c;
+    --muted: #8a7f72;
+    --border: #c4b9a8;
+    --shadow: rgba(15,14,13,0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: 'LINKS';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(5rem, 20vw, 14rem);
+    font-weight: 700;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--border);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--rust);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    position: relative;
+    z-index: 1;
+  }
+  h1 em { font-style: italic; color: var(--rust); }
+  .subtitle {
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 480px;
+    margin-inline: auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+  }
+
+  /* ── TABLE WRAPPER ── */
+  .table-wrap {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    box-shadow: 4px 4px 0 var(--cream);
+    overflow-x: auto;
+    animation: fadeUp 0.4s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* ── COLUMN HEADERS ── */
+  thead tr {
+    border-bottom: 2px solid var(--border);
+    background: var(--paper);
+  }
+  th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    padding: 1rem 1.25rem 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  th:first-child { width: 160px; border-right: 1px solid var(--cream); }
+  th.col-repo   { color: var(--slate); }
+  th.col-deploy { color: var(--forest); }
+  th.col-other  { color: var(--gold); }
+  th .col-icon  { display: inline-block; margin-right: 6px; font-size: 0.8rem; }
+
+  /* ── ROWS ── */
+  tbody tr {
+    border-bottom: 1px solid var(--cream);
+    transition: background 0.12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #faf8f4; }
+
+  /* ── CELLS ── */
+  td {
+    padding: 0.9rem 1.25rem;
+    vertical-align: top;
+  }
+  td:first-child {
+    border-right: 1px solid var(--cream);
+    min-width: 140px;
+  }
+
+  /* ── ROW LABEL ── */
+  .row-label-wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .row-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .row-del {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    opacity: 0;
+    transition: color 0.15s, opacity 0.15s;
+    line-height: 1;
+  }
+  tbody tr:hover .row-del { opacity: 1; }
+  .row-del:hover { color: var(--rust); }
+
+  /* ── LINK CELL ── */
+  .cell-links { display: flex; flex-direction: column; gap: 6px; }
+
+  .link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--rust);
+    text-decoration: none;
+    padding: 3px 8px;
+    border: 1px solid rgba(193,68,14,0.2);
+    border-radius: 2px;
+    background: rgba(193,68,14,0.04);
+    transition: border-color 0.15s, background 0.15s;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .link-pill:hover { border-color: var(--rust); background: rgba(193,68,14,0.08); }
+  .link-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .link-pill-arrow { flex-shrink: 0; opacity: 0.6; }
+
+  .link-pill-wrap { display: flex; align-items: center; gap: 4px; }
+  .pill-del {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  tbody tr:hover .pill-del { opacity: 1; }
+  .pill-del:hover { color: var(--rust); }
+
+  /* empty / add inline */
+  .cell-empty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--border);
+    font-style: italic;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .cell-empty:hover { color: var(--rust); }
+
+  /* ── INLINE ADD FORM ── */
+  .add-form { display: none; gap: 5px; flex-direction: column; margin-top: 4px; }
+  .add-form.open { display: flex; }
+  .add-form input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    color: var(--ink);
+    padding: 4px 8px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .add-form input:focus { border-color: var(--rust); box-shadow: 0 0 0 3px rgba(193,68,14,0.08); }
+  .add-form input::placeholder { color: var(--border); }
+  .add-form-btns { display: flex; gap: 5px; }
+  .btn-sm-save {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .btn-sm-save:hover { background: var(--rust); }
+  .btn-sm-cancel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: none;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  .add-link-trigger {
+    background: none;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: var(--border);
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    transition: color 0.15s;
+    margin-top: 2px;
+    display: block;
+  }
+  .add-link-trigger:hover { color: var(--rust); }
+
+  /* ── ADD ROW ── */
+  .add-row-wrap {
+    padding: 1rem 1.25rem;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .add-row-input {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+    padding: 2px 4px;
+    outline: none;
+    width: 180px;
+    transition: border-color 0.15s;
+  }
+  .add-row-input:focus { border-bottom-color: var(--rust); }
+  .add-row-input::placeholder { color: var(--border); font-style: italic; }
+  .btn-add-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-add-row:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.72rem;
+    color: var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--cream);
+    letter-spacing: 0.1em;
+    margin-top: 3rem;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    header { padding: 2.5rem 1.25rem 2rem; }
+    main { padding: 1.5rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Repos · Pipelines · Infra</p>
+  <h1>all <em>dev</em> links</h1>
+  <p class="subtitle">All your repos, deploy jobs, and services - one place.</p>
+</header>
+
+<main>
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="col-repo"><span class="col-icon">⌥</span>Repo</th>
+          <th class="col-deploy"><span class="col-icon">⚡</span>Jenkins Job</th>
+          <th class="col-other"><span class="col-icon">◈</span>Other Links</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="add-row-wrap">
+      <input class="add-row-input" id="newRowName" placeholder="New row name…" />
+      <button class="btn-add-row" id="addRowBtn">+ Add row</button>
+    </div>
+  </div>
+</main>
+
+<footer>Links stored locally in your browser · No external services</footer>
+
+<script>
+const KEY = 'plh-table-v1';
+const uid = () => Math.random().toString(36).slice(2, 8);
+
+// link: { id, label, url }
+const DEFAULT = [
+  { 
+    id:'row1', 
+    name:'frontend',     
+    repo:[{ id: uid(), label: 'frontend', url: 'https://github.com/browserstack/frontend' }],  
+    deploy:[{ id: uid(), label:'FE deploy', url:'https://minion.browserstack.com/job/FrontendDeploys/job/DeployStagingEnvironmentFrontend/'}], 
+    other:[] 
+  },
+  { 
+    id:'row3', 
+    name:'electron app', 
+    repo:[{ id: uid(), label: 'electron-app', url: 'https://github.com/browserstack/electron-app' }],  
+    deploy:[], 
+    other:[{ id: uid(), label:'releases', url:'https://github.com/browserstack/electron-app/releases'}, { id: uid(), label:'preprod-releases', url:'https://github.com/browserstack/lcnc-preprod-releases/releases'}] 
+  },
+  { 
+    id:'row2', 
+    name:'backend',      
+    repo:[{ id: uid(), label: 'lcnc-backend', url: 'https://github.com/browserstack/lcnc-backend' }],  
+    deploy:[{ id: uid(), label:'BE image builder', url:'https://minion.browserstack.com/job/ContainerImageBuilder/job/lcnc-backend/'},{ id: uid(), label:'BE promoter', url:'https://minion.browserstack.com/job/ContainerImagePromoter/job/lcnc-backend/'} ], 
+    other:[{ id: uid(), label:'staging infra', url:'https://github.com/browserstack/lcnc-infra-ops/blob/staging/kubernetes-resources/fluxcd/stag/lcnc-values.yaml'}, { id: uid(), label:'preprod infra', url:'https://github.com/browserstack/lcnc-infra-ops/blob/preprod/kubernetes-resources/fluxcd/preprod/lcnc-values.yaml'}] 
+  },
+  { 
+    id:'row4', 
+    name:'services',     
+    repo:[{ id: uid(), label: 'lcnc-services', url: 'https://github.com/browserstack/lcnc-services' }],  
+    deploy:[{ id: uid(), label:'services image builder', url:'https://minion.browserstack.com/view/SelfServeInfrastructure/job/SelfServeInfrastructure/job/lcncBase/job/ContainerImageBuilder/'}, { id: uid(), label:'services promoter', url:'https://minion.browserstack.com/view/SelfServeInfrastructure/job/SelfServeInfrastructure/job/lcncBase/job/ContainerImagePromoter/'}], 
+    other:[{ id: uid(), label:'staging infra', url:'https://github.com/browserstack/lcnc-infra-ops/blob/staging/kubernetes-resources/fluxcd/stag/lcnc-worker-values.yaml'}, { id: uid(), label:'preprod infra', url:'https://github.com/browserstack/lcnc-infra-ops/blob/preprod/kubernetes-resources/fluxcd/preprod/lcnc-worker-values.yaml'}]
+  },
+  { 
+    id:'row5', 
+    name:'lcnc-app',     
+    repo:[{ id: uid(), label: 'lcnc-app', url: 'https://github.com/browserstack/lcnc-app' }],  
+    deploy:[], 
+    other:[] 
+  },
+  { 
+    id:'row5', 
+    name:'testhub',     
+    repo:[{ id: uid(), label: 'testhub', url: 'https://github.com/browserstack/testhub' }],  
+    deploy:[{ id: uid(), label: 'TH deploy', url: 'https://minion.browserstack.com/job/SelfServeInfrastructure/job/TestHubBase/job/TestHubContainerImageBuilder/'}], 
+    other:[] 
+  }
+];
+// { id: uid(), label:'', url:''}
+
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || DEFAULT; }
+  catch { return DEFAULT; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+}
+
+let state = load();
+
+/* ── RENDER ── */
+function render() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  state.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.dataset.row = row.id;
+
+    tr.innerHTML = `
+      <td>
+        <div class="row-label-wrap">
+          <span class="row-label">${esc(row.name)}</span>
+          <button class="row-del" data-del-row="${row.id}" title="Delete row">✕</button>
+        </div>
+      </td>
+      ${['repo','deploy','other'].map(col => `
+        <td data-col="${col}">
+          <div class="cell-links" id="cl-${row.id}-${col}">
+            ${renderLinks(row, col)}
+          </div>
+          <div class="add-form" id="af-${row.id}-${col}">
+            <input type="text" class="af-label" placeholder="Label (optional)" />
+            <input type="url"  class="af-url"   placeholder="https://…" />
+            <div class="add-form-btns">
+              <button class="btn-sm-save" data-save="${row.id}" data-col="${col}">Save</button>
+              <button class="btn-sm-cancel" data-cancel="${row.id}" data-col="${col}">Cancel</button>
+            </div>
+          </div>
+          <button class="add-link-trigger" data-open="${row.id}" data-col="${col}">+ add link</button>
+        </td>`).join('')}
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  bindEvents();
+}
+
+function renderLinks(row, col) {
+  const links = row[col] || [];
+  return links.map(lk => `
+    <div class="link-pill-wrap">
+      <a class="link-pill" href="${esc(lk.url)}" target="_blank" rel="noopener" title="${esc(lk.url)}">
+        <span class="link-pill-text">${esc(lk.label || lk.url.replace(/^https?:\/\//, ''))}</span>
+        <span class="link-pill-arrow">↗</span>
+      </a>
+      <button class="pill-del" data-del-link="${lk.id}" data-row="${row.id}" data-col="${col}" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── EVENTS ── */
+function bindEvents() {
+  // open add form
+  document.querySelectorAll('[data-open]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const af = document.getElementById(`af-${btn.dataset.open}-${btn.dataset.col}`);
+      if (!af) return;
+      // close any other open forms
+      document.querySelectorAll('.add-form.open').forEach(f => { if (f !== af) f.classList.remove('open'); });
+      af.classList.toggle('open');
+      if (af.classList.contains('open')) af.querySelector('.af-url').focus();
+    });
+  });
+
+  // cancel
+  document.querySelectorAll('[data-cancel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const af = document.getElementById(`af-${btn.dataset.cancel}-${btn.dataset.col}`);
+      if (af) { af.classList.remove('open'); af.querySelector('.af-label').value=''; af.querySelector('.af-url').value=''; }
+    });
+  });
+
+  // save link
+  document.querySelectorAll('[data-save]').forEach(btn => {
+    btn.addEventListener('click', () => saveLink(btn.dataset.save, btn.dataset.col, btn));
+  });
+
+  // enter key in url field
+  document.querySelectorAll('.af-url').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const af = inp.closest('.add-form');
+      const saveBtn = af.querySelector('[data-save]');
+      if (saveBtn) saveLink(saveBtn.dataset.save, saveBtn.dataset.col, saveBtn);
+    });
+  });
+
+  // delete link
+  document.querySelectorAll('[data-del-link]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = state.find(r => r.id === btn.dataset.row);
+      if (!row) return;
+      row[btn.dataset.col] = row[btn.dataset.col].filter(l => l.id !== btn.dataset.delLink);
+      save(); render();
+    });
+  });
+
+  // delete row
+  document.querySelectorAll('[data-del-row]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state = state.filter(r => r.id !== btn.dataset.delRow);
+      save(); render();
+    });
+  });
+}
+
+function saveLink(rowId, col, btn) {
+  const af = document.getElementById(`af-${rowId}-${col}`);
+  if (!af) return;
+  const url   = af.querySelector('.af-url').value.trim();
+  const label = af.querySelector('.af-label').value.trim();
+  if (!url) { af.querySelector('.af-url').focus(); return; }
+  const row = state.find(r => r.id === rowId);
+  if (!row) return;
+  if (!row[col]) row[col] = [];
+  row[col].push({ id: uid(), label, url });
+  save();
+  // update just that cell's links without full re-render to keep form state smooth
+  const cl = document.getElementById(`cl-${rowId}-${col}`);
+  if (cl) cl.innerHTML = renderLinks(row, col);
+  af.classList.remove('open');
+  af.querySelector('.af-label').value = '';
+  af.querySelector('.af-url').value = '';
+  // re-bind delete events for new pills
+  document.querySelectorAll('[data-del-link]').forEach(b => {
+    b.addEventListener('click', () => {
+      const r = state.find(x => x.id === b.dataset.row);
+      if (!r) return;
+      r[b.dataset.col] = r[b.dataset.col].filter(l => l.id !== b.dataset.delLink);
+      save(); render();
+    });
+  });
+}
+
+/* ── ADD ROW ── */
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+document.getElementById('newRowName').addEventListener('keydown', e => { if (e.key === 'Enter') addRow(); });
+
+function addRow() {
+  const inp = document.getElementById('newRowName');
+  const name = inp.value.trim();
+  if (!name) { inp.focus(); return; }
+  state.push({ id: uid(), name, repo: [], deploy: [], other: [] });
+  inp.value = '';
+  save(); render();
+}
+
+render();
+</script>
+</body>
+</html>

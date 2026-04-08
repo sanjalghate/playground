@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Links Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #f5f0e8;
+    --cream: #ede7d9;
+    --rust: #c1440e;
+    --gold: #c89a2e;
+    --forest: #2d5a27;
+    --slate: #3d4a5c;
+    --muted: #8a7f72;
+    --border: #c4b9a8;
+    --shadow: rgba(15,14,13,0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::after {
+    content: 'LINKS';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(5rem, 20vw, 14rem);
+    font-weight: 700;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--border);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--rust);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 em { font-style: italic; color: var(--rust); }
+
+  .subtitle {
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 480px;
+    margin-inline: auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+    display: grid;
+    gap: 2rem;
+  }
+
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2.5rem;
+    box-shadow: 4px 4px 0 var(--cream);
+    animation: fadeUp 0.5s ease both;
+  }
+  .section-card:nth-child(1) { animation-delay: 0.05s; }
+  .section-card:nth-child(2) { animation-delay: 0.1s; }
+  .section-card:nth-child(3) { animation-delay: 0.15s; }
+  .section-card:nth-child(4) { animation-delay: 0.2s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--cream);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .section-card h2 input {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    width: 100%;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+    padding: 0;
+  }
+  .section-card h2 input:focus { border-bottom-color: var(--rust); }
+
+  /* ── LINK GRID ── */
+  .link-grid {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  /* ── LINK ITEM ── */
+  .link-item {
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    padding: 0.9rem 1rem;
+    background: var(--paper);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .link-item.has-url { border-color: var(--slate); }
+  .link-item.has-url:hover { border-color: var(--rust); box-shadow: 2px 2px 0 var(--cream); }
+  .link-item:not(.has-url):hover { border-color: var(--muted); }
+
+  .item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .item-left { display: flex; align-items: center; gap: 7px; }
+
+  .item-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--cream);
+    color: var(--muted);
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+  }
+  .has-url .item-badge { background: rgba(61,74,92,0.08); color: var(--slate); border-color: var(--slate); }
+
+  .item-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .edit-btn {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    line-height: 1;
+    opacity: 0;
+    transition: color 0.15s, opacity 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .link-item:hover .edit-btn { opacity: 1; }
+  .edit-btn:hover { color: var(--rust); }
+
+  .item-url {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+  }
+  .item-url-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--rust);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .item-url-arrow { font-size: 12px; color: var(--rust); flex-shrink: 0; }
+
+  .item-empty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--border);
+    cursor: pointer;
+    font-style: italic;
+  }
+  .item-empty:hover { color: var(--rust); }
+
+  /* ── EDIT STATE ── */
+  .item-view { display: block; }
+  .item-edit { display: none; }
+  .link-item.editing .item-view { display: none; }
+  .link-item.editing .item-edit { display: block; }
+
+  .edit-fields { display: grid; grid-template-columns: 1fr 80px; gap: 6px; margin-bottom: 8px; }
+  .edit-fields .full { grid-column: 1/-1; }
+
+  .edit-fields input {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    color: var(--ink);
+    padding: 5px 8px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .edit-fields input:focus { border-color: var(--rust); box-shadow: 0 0 0 3px rgba(193,68,14,0.08); }
+  .edit-fields input::placeholder { color: var(--border); }
+
+  .edit-actions { display: flex; gap: 6px; }
+  .btn-save {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-save:hover { background: var(--rust); }
+  .btn-cancel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .btn-delete {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    color: #b06060;
+    border: 1.5px solid #dcc4c4;
+    border-radius: 2px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  /* ── ADD LINK ── */
+  .add-link-btn {
+    border: 1.5px dashed var(--border);
+    border-radius: 2px;
+    padding: 0.9rem 1rem;
+    background: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-link-btn:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* ── ADD SECTION ── */
+  .add-section-btn {
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 2px;
+    padding: 1.2rem 2rem;
+    color: var(--border);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-section-btn:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.72rem;
+    color: var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--cream);
+    letter-spacing: 0.1em;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    header, main { padding-left: 1.25rem; padding-right: 1.25rem; }
+    h1 { font-size: 2rem; }
+    .section-card { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Repos · Pipelines · Services</p>
+  <h1>Project <em>Links</em> Hub</h1>
+  <p class="subtitle">All your repos, deploy jobs, and services — one place. Click any card to add or edit a URL.</p>
+</header>
+
+<main id="main"></main>
+
+<footer>Links stored locally in your browser · No external services</footer>
+
+<script>
+const STORAGE_KEY = 'plh-v3';
+const uid = () => Math.random().toString(36).slice(2, 8);
+
+const DEFAULT = [
+  {
+    id: 's1', num: '01', label: 'Repositories', tag: 'Source Code',
+    items: [
+      { id: 'r1', name: 'Frontend',     url: '', badge: 'React'    },
+      { id: 'r2', name: 'Backend',      url: '', badge: 'Node'     },
+      { id: 'r3', name: 'Electron App', url: '', badge: 'Electron' },
+      { id: 'r4', name: 'Services',     url: '', badge: 'Monorepo' },
+    ]
+  },
+  {
+    id: 's2', num: '02', label: 'Deploy Jobs', tag: 'CI / CD',
+    items: [
+      { id: 'd1', name: 'Frontend Deploy',  url: '', badge: 'Pipeline' },
+      { id: 'd2', name: 'Backend Deploy',   url: '', badge: 'Pipeline' },
+      { id: 'd3', name: 'Backend Promoter', url: '', badge: 'Promote'  },
+    ]
+  },
+  {
+    id: 's3', num: '03', label: 'Services & Infra', tag: 'Infrastructure',
+    items: [
+      { id: 'sv1', name: 'Services Repo', url: '', badge: 'Config' },
+    ]
+  }
+];
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT; }
+  catch { return DEFAULT; }
+}
+function save(d) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch {}
+}
+
+let state = load();
+
+function render() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  state.forEach((sec, si) => {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.dataset.sec = sec.id;
+
+    card.innerHTML = `
+      <div class="card-label">
+        <span>Section ${sec.num}</span>
+        <span>${esc(sec.tag)}</span>
+      </div>
+      <h2><input class="sec-title" value="${esc(sec.label)}" title="Click to rename" /></h2>
+      <div class="link-grid" data-grid="${sec.id}">
+        ${sec.items.map(itemHTML).join('')}
+        <button class="add-link-btn" data-add="${sec.id}">
+          <span>+</span><span>Add link</span>
+        </button>
+      </div>
+    `;
+
+    main.appendChild(card);
+  });
+
+  const addSec = document.createElement('button');
+  addSec.className = 'add-section-btn';
+  addSec.textContent = '+ Add section';
+  addSec.onclick = onAddSection;
+  main.appendChild(addSec);
+
+  bindEvents();
+}
+
+function itemHTML(item) {
+  const has = item.url && item.url.trim();
+  const display = has ? item.url.replace(/^https?:\/\//, '') : '';
+  return `
+    <div class="link-item ${has ? 'has-url' : ''}" data-item="${item.id}">
+      <div class="item-view">
+        <div class="item-top">
+          <div class="item-left">
+            ${item.badge ? `<span class="item-badge">${esc(item.badge)}</span>` : ''}
+            <span class="item-name">${esc(item.name)}</span>
+          </div>
+          <button class="edit-btn" data-edit="${item.id}" title="Edit">✎</button>
+        </div>
+        ${has
+          ? `<a class="item-url" href="${esc(item.url)}" target="_blank" rel="noopener">
+               <span class="item-url-text">${esc(display)}</span>
+               <span class="item-url-arrow">↗</span>
+             </a>`
+          : `<span class="item-empty" data-edit="${item.id}">add url →</span>`
+        }
+      </div>
+      <div class="item-edit">
+        <div class="edit-fields">
+          <input class="ef-name" type="text" placeholder="Name" value="${esc(item.name)}" />
+          <input class="ef-badge" type="text" placeholder="Badge" value="${esc(item.badge||'')}" />
+          <input class="ef-url full" type="url" placeholder="https://…" value="${esc(item.url||'')}" />
+        </div>
+        <div class="edit-actions">
+          <button class="btn-save" data-save="${item.id}">Save</button>
+          <button class="btn-cancel" data-cancel="${item.id}">Cancel</button>
+          <button class="btn-delete" data-delete="${item.id}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function bindEvents() {
+  const main = document.getElementById('main');
+
+  // Section title
+  main.querySelectorAll('.sec-title').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const sec = state.find(s => s.id === e.target.closest('.section-card').dataset.sec);
+      if (sec) { sec.label = e.target.value; save(state); }
+    });
+  });
+
+  main.querySelectorAll('[data-edit]').forEach(el =>
+    el.addEventListener('click', e => { e.stopPropagation(); openEdit(el.dataset.edit); })
+  );
+  main.querySelectorAll('[data-save]').forEach(el =>
+    el.addEventListener('click', () => saveItem(el.dataset.save))
+  );
+  main.querySelectorAll('[data-cancel]').forEach(el =>
+    el.addEventListener('click', () => closeEdit(el.dataset.cancel))
+  );
+  main.querySelectorAll('[data-delete]').forEach(el =>
+    el.addEventListener('click', () => deleteItem(el.dataset.delete))
+  );
+  main.querySelectorAll('[data-add]').forEach(el =>
+    el.addEventListener('click', () => addItem(el.dataset.add))
+  );
+  main.querySelectorAll('.ef-url').forEach(inp =>
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveItem(inp.closest('.link-item').dataset.item);
+    })
+  );
+}
+
+function openEdit(id) {
+  document.querySelector(`.link-item[data-item="${id}"]`)?.classList.add('editing');
+  document.querySelector(`.link-item[data-item="${id}"] .ef-name`)?.focus();
+}
+
+function closeEdit(id) {
+  const el = document.querySelector(`.link-item[data-item="${id}"]`);
+  el?.classList.remove('editing');
+  const it = findItem(id);
+  if (it && el) {
+    el.querySelector('.ef-name').value = it.name;
+    el.querySelector('.ef-badge').value = it.badge || '';
+    el.querySelector('.ef-url').value = it.url || '';
+  }
+}
+
+function saveItem(id) {
+  const el = document.querySelector(`.link-item[data-item="${id}"]`);
+  if (!el) return;
+  const name  = el.querySelector('.ef-name').value.trim();
+  const badge = el.querySelector('.ef-badge').value.trim();
+  const url   = el.querySelector('.ef-url').value.trim();
+  state.forEach(sec => {
+    sec.items = sec.items.map(it => it.id === id ? { ...it, name: name||it.name, badge, url } : it);
+  });
+  save(state); render();
+}
+
+function deleteItem(id) {
+  state.forEach(sec => { sec.items = sec.items.filter(it => it.id !== id); });
+  save(state); render();
+}
+
+function addItem(secId) {
+  const sec = state.find(s => s.id === secId);
+  if (!sec) return;
+  const id = uid();
+  sec.items.push({ id, name: 'New Link', url: '', badge: '' });
+  save(state); render();
+  setTimeout(() => openEdit(id), 0);
+}
+
+function onAddSection() {
+  const id = uid();
+  const num = String(state.length + 1).padStart(2, '0');
+  state.push({ id, num, label: 'New Section', tag: 'Custom', items: [] });
+  save(state); render();
+}
+
+function findItem(id) {
+  for (const sec of state)
+    for (const it of sec.items)
+      if (it.id === id) return it;
+}
+
+render();
+</script>
+</body>
+</html>
