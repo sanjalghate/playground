@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Line Adder</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 1rem;
+      background: #fff;
+      color: #111;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: #888;
+    }
+
+    button.add-btn {
+      padding: 8px 16px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button.add-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .line-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #f7f7f7;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .line-number {
+      font-size: 12px;
+      color: #999;
+      min-width: 20px;
+      text-align: right;
+    }
+
+    .line-text {
+      flex: 1;
+    }
+
+    button.remove-btn {
+      padding: 2px 8px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button.remove-btn:hover {
+      background: #ffe0e0;
+      border-color: #f99;
+    }
+
+    .empty-msg {
+      font-size: 14px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="input-row">
+    <input id="txt" type="text" placeholder="Type something..." />
+    <button class="add-btn" onclick="add()">Add</button>
+  </div>
+
+  <div id="lines"></div>
+  <p id="empty" class="empty-msg">No lines yet. Type above and press Enter.</p>
+
+  <script>
+    let count = 0;
+
+    document.getElementById('txt').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') add();
+    });
+
+    function add() {
+      const inp = document.getElementById('txt');
+      const val = inp.value.trim();
+      if (!val) return;
+
+      count++;
+      document.getElementById('empty').style.display = 'none';
+
+      const line = document.createElement('div');
+      line.className = 'line-item';
+      line.innerHTML = `
+        <span class="line-number">${count}</span>
+        <span class="line-text">${val}</span>
+        <button class="remove-btn" onclick="removeLine(this)">✕</button>
+      `;
+
+      document.getElementById('lines').appendChild(line);
+      inp.value = '';
+      inp.focus();
+    }
+
+    function removeLine(btn) {
+      btn.parentElement.remove();
+      recount();
+    }
+
+    function recount() {
+      const rows = document.querySelectorAll('.line-item');
+      rows.forEach((r, i) => r.querySelector('.line-number').textContent = i + 1);
+      count = rows.length;
+      if (!count) document.getElementById('empty').style.display = '';
+    }
+  </script>
+
+</body>
+</html>
