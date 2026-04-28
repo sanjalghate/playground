@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visit Logger</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --border: #262a33;
+    --text: #e8eaed;
+    --muted: #9aa0a6;
+    --accent: #7c9cff;
+    --good: #5dd39e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .container { width: 100%; max-width: 640px; }
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .latest { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; margin: 8px 0; }
+  .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .row .key { color: var(--muted); }
+  .row .val { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px; }
+  .log-entry { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-entry .time { color: var(--accent); }
+  .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+  .dot.off { background: var(--muted); }
+  input { width: 100%; background: #0a0c10; border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 13px; margin-top: 8px; }
+  input:focus { outline: none; border-color: var(--accent); }
+  label { font-size: 13px; color: var(--muted); }
+  .btn {
+    background: var(--accent); color: #0f1115; border: none;
+    padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 16px; width: 100%;
+    transition: opacity 0.15s ease;
+  }
+  .btn:hover:not(:disabled) { opacity: 0.9; }
+  .btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+  .refresh-btn {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    float: right; margin-top: -4px;
+  }
+  .refresh-btn:hover { color: var(--text); border-color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Visit Logger</h1>
+    <div class="subtitle">Click the button to log this visit to your Google Sheet</div>
+
+    <div class="card">
+      <h2>This visit</h2>
+      <div class="latest" id="latest">—</div>
+      <div class="row"><span class="key">Browser</span><span class="val" id="browser">—</span></div>
+      <div class="row"><span class="key">Time</span><span class="val" id="time">—</span></div>
+      <button id="logBtn" class="btn" disabled>Log my visit</button>
+      <div style="margin-top:12px;">
+        <span class="status"><span class="dot off" id="dot"></span><span id="statusText">Set endpoint below to enable</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+      <h2>Last 10 visits</h2>
+      <div id="history"><div class="empty">No endpoint configured yet.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Backend endpoint</h2>
+      <label>Apps Script Web app URL:</label>
+      <input id="endpoint" type="text" placeholder="https://script.google.com/macros/s/AKfycbxwDIpN0_SiCiCoVK46LPereb6JOm34Fx5qKOcSbi2UGrLl4APsE9nHEqHGeC7uvACqog/exec" />
+    </div>
+  </div>
+
+<script>
+  function detectBrowser() {
+    const ua = navigator.userAgent;
+    if (/Edg\//.test(ua)) return "Edge";
+    if (/OPR\//.test(ua)) return "Opera";
+    if (/Firefox\//.test(ua)) return "Firefox";
+    if (/Chrome\//.test(ua) && !/Edg\/|OPR\//.test(ua)) return "Chrome";
+    if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return "Safari";
+    return "Unknown";
+  }
+
+  function formatTime(date) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = date.getHours();
+    const m = date.getMinutes();
+    const ampm = h >= 12 ? "pm" : "am";
+    h = h % 12 || 12;
+    const minStr = m === 0 ? "" : ":" + String(m).padStart(2, "0");
+    return `${h}${minStr}${ampm} ${months[date.getMonth()]} ${date.getDate()}`;
+  }
+
+  // --- Capture this visit (display only, not logged yet) ---
+  const now = new Date();
+  const browser = detectBrowser();
+  const formatted = formatTime(now);
+
+  const logEntry = {
+    browser,
+    timestamp: now.toISOString(),
+    displayTime: formatted,
+    userAgent: navigator.userAgent,
+    referrer: document.referrer || null,
+    url: window.location.href
+  };
+
+  document.getElementById("latest").textContent = `${formatted} ${browser}`;
+  document.getElementById("browser").textContent = browser;
+  document.getElementById("time").textContent = formatted;
+
+  // --- Element refs ---
+  const endpointInput = document.getElementById("endpoint");
+  const logBtn = document.getElementById("logBtn");
+  const refreshBtn = document.getElementById("refreshBtn");
+  const dot = document.getElementById("dot");
+  const statusText = document.getElementById("statusText");
+  const historyEl = document.getElementById("history");
+
+  // --- State ---
+  let endpoint = "";
+
+  // Restore saved endpoint
+  const saved = localStorage.getItem("visitLoggerEndpoint");
+  if (saved) {
+    endpointInput.value = saved;
+    setEndpoint(saved);
+  } else if (window.location.hash.startsWith("#endpoint=")) {
+    const url = decodeURIComponent(window.location.hash.slice(10));
+    endpointInput.value = url;
+    setEndpoint(url);
+  }
+
+  endpointInput.addEventListener("change", () => {
+    setEndpoint(endpointInput.value.trim());
+  });
+
+  function setEndpoint(url) {
+    endpoint = url;
+    if (url) {
+      localStorage.setItem("visitLoggerEndpoint", url);
+      logBtn.disabled = false;
+      statusText.textContent = "Ready to log";
+      fetchHistory();
+    } else {
+      logBtn.disabled = true;
+      statusText.textContent = "Set endpoint below to enable";
+    }
+  }
+
+  // --- Log button click ---
+  logBtn.addEventListener("click", async () => {
+    if (!endpoint) return;
+    logBtn.disabled = true;
+    logBtn.textContent = "Logging…";
+    statusText.textContent = "Sending…";
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(logEntry),
+        redirect: "follow"
+      });
+      if (res.ok) {
+        dot.classList.remove("off");
+        statusText.textContent = "Logged ✓";
+        logBtn.textContent = "Logged ✓";
+        setTimeout(() => {
+          logBtn.textContent = "Log my visit";
+          logBtn.disabled = false;
+        }, 2000);
+        fetchHistory();
+      } else {
+        statusText.textContent = `Backend returned ${res.status}`;
+        logBtn.textContent = "Log my visit";
+        logBtn.disabled = false;
+      }
+    } catch (err) {
+      statusText.textContent = "Error: " + err.message;
+      logBtn.textContent = "Log my visit";
+      logBtn.disabled = false;
+    }
+  });
+
+  // --- Refresh button ---
+  refreshBtn.addEventListener("click", fetchHistory);
+
+  // --- Fetch last 10 visits ---
+  async function fetchHistory() {
+    if (!endpoint) return;
+    historyEl.innerHTML = '<div class="empty">Loading…</div>';
+    try {
+      const res = await fetch(endpoint, { method: "GET", redirect: "follow" });
+      const data = await res.json();
+      const entries = data.entries || [];
+      if (entries.length === 0) {
+        historyEl.innerHTML = '<div class="empty">No visits logged yet. Click the button above.</div>';
+        return;
+      }
+      historyEl.innerHTML = entries.map(e =>
+        `<div class="log-entry">
+           <span class="time">${escapeHtml(e.displayTime || "—")}</span>
+           <span>${escapeHtml(e.browser || "—")}</span>
+         </div>`
+      ).join("");
+    } catch (err) {
+      historyEl.innerHTML = `<div class="empty">Could not load history: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+</script>
+</body>
+</html>
