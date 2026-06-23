@@ -1,16 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Download CSV Test</title>
-</head>
-<body>
-  <h1>Download CSV Test Page</h1>
-  <p>Click the link below to open the CSV download in a new tab:</p>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download CSV Test</title>
+  </head>
+  <body>
+    <h1>Download CSV Test Page</h1>
+    <p>Click to download the survey CSV:</p>
 
-  <a href="https://getsamplefiles.com/download/csv/sample-1.csv" target="_blank">
-    Download CSV
-  </a>
-</body>
-</html>
+    <button id="downloadBtn">Download File</button>
+
+    <script>
+      document.getElementById('downloadBtn').addEventListener('click', function () {
+        const csv =
+          "Survey Type,PORTFOLIO,COMPANY,TURNER\n" +
+          "Overall,N/A,N/A,7.99\n" +
+          "Prospect,N/A,N/A,8.48\n" +
+          "Non Visitor,N/A,N/A,7.94\n" +
+          "Resident (TALi),N/A,N/A,6.85\n" +
+          "Work Order,N/A,N/A,9.17\n";
+
+        // octet-stream forces a real download (not inline render)
+        const blob = new Blob([csv], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+
+        // ---- Variant A (same-tab download): recorder captures it as a download ----
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Aggregate_Summary.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        // ---- Variant B: ALSO open a new tab to spawn Edge's downloads tab ----
+        // Comment out Variant A above and use this to force the extra edge://downloads/hub tab:
+        // window.open(url, '_blank');
+      });
+    </script>
+  </body>
+  </html>
