@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Prompt Test</title>
+  </head>
+  <body>
+    <h1>Notification Permission Prompt Test</h1>
+    <p>Clicking the button requests Web Notification permission, which Safari shows as a native macOS dialog.</p>
+
+    <button id="askBtn">Enable notifications</button>
+    <p>Permission: <span id="perm">default</span></p>
+
+    <!-- Interact with this AFTER the prompt shows — on Safari the native dialog blocks it -->
+    <label>Type here after the prompt: <input id="afterField" type="text" placeholder="type something"></label>
+
+    <script>
+      const permEl = document.getElementById('perm');
+      function updateStatus() {
+        try { permEl.textContent = ('Notification' in window) ? Notification.permission : 'unsupported'; }
+        catch (e) { permEl.textContent = 'unsupported'; }
+      }
+      updateStatus();
+      function askNotification() {
+        if (!('Notification' in window)) { permEl.textContent = 'unsupported'; return; }
+        try {
+          const p = Notification.requestPermission(function (result) { permEl.textContent = result; });
+          if (p && typeof p.then === 'function') p.then(function (result) { permEl.textContent = result; });
+        } catch (e) { permEl.textContent = 'error: ' + e.message; }
+      }
+      document.getElementById('askBtn').addEventListener('click', askNotification);
+      window.addEventListener('load', function () { setTimeout(askNotification, 500); });
+    </script>
+  </body>
+  </html>
