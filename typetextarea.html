@@ -1,0 +1,80 @@
+<!doctype html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BackPack Repro — heavy per-keystroke textarea</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; }
+      .row { display: flex; gap: 16px; align-items: flex-start; }
+      .col-xs-4 { width: 300px; }
+      .col-xs-8 { flex: 1; }
+      .form-control { width: 100%; box-sizing: border-box; font-size: 14px; padding: 8px; }
+      .input-lg { font-size: 16px; }
+      #readout { margin-top: 16px; font-family: monospace; white-space: pre; background:#f4f4f4; padding:12px; border-radius:6px; }
+      label { font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h2>BackPack content form (repro for LCNC type-hang)</h2>
+
+    <!-- Structure/selectors mirror the recorded step: id/name "BackPackContent",
+         class "form-control input-lg", required, inside .col-xs-8 within a .row.
+         The robust algorithm should locate it exactly like the customer's page. -->
+    <form onsubmit="return false;">
+      <div class="row">
+        <div class="col-xs-4">
+          <label for="BackPackContent">BackPack content:</label>
+          <div>TrainingUser</div>
+        </div>
+        <div class="col-xs-8">
+          <textarea id="BackPackContent" name="BackPackContent"
+                    class="form-control input-lg" style="height:400px" required></textarea>
+        </div>
+      </div>
+    </form>
+
+    <div id="readout">Type into the textarea…</div>
+
+    <!--
+      HEAVY PER-KEYSTROKE HANDLER (this is the whole point of the repro).
+      On EVERY 'input' event we do work proportional to the CURRENT value length —
+      the common O(n) "re-validate / re-parse the whole field on each keystroke"
+      pattern. Typed char-by-char (what LCA's setValue does), total cost is O(n^2),
+      so a short value is instant but a ~300-char value blows up into tens of
+      seconds and trips the 40s step timeout. Setting .value atomically (setProperty)
+      fires this handler only ONCE -> stays fast.
+
+      WORK_PER_CHAR is tunable: raise it if it doesn't hang on your machine, lower
+      it if you just want to see the slowdown without a full 40s stall.
+    -->
+    <script>
+      // ~1,000,000 gave a ~40s+ stall on a 300-char value in local Firefox/Chrome.
+      // Override via URL hash, e.g. open  backpack_repro.html#300000
+      var WORK_PER_CHAR = parseInt((location.hash || '').slice(1)) || 1000000;
+
+      var ta = document.getElementById('BackPackContent');
+      var readout = document.getElementById('readout');
+      var totalHandlerMs = 0, keystrokes = 0;
+
+      ta.addEventListener('input', function () {
+        var n = ta.value.length;
+        var t0 = performance.now();
+        // Busy work proportional to current length — blocks the main thread,
+        // exactly like a synchronous per-keystroke validation/parse.
+        var x = 0;
+        var iters = n * WORK_PER_CHAR;
+        for (var i = 0; i < iters; i++) { x += Math.sqrt(i) * 1.0000001; }
+        var dt = performance.now() - t0;
+        totalHandlerMs += dt; keystrokes++;
+        ta.setAttribute('data-x', x); // defeat dead-code elimination
+        readout.textContent =
+          'length: ' + n + ' chars\n' +
+          'this keystroke handler: ' + dt.toFixed(1) + ' ms\n' +
+          'keystrokes: ' + keystrokes + '\n' +
+          'cumulative handler time: ' + (totalHandlerMs / 1000).toFixed(2) + ' s\n' +
+          'WORK_PER_CHAR: ' + WORK_PER_CHAR;
+      });
+    </script>
+  </body>
+  </html>
