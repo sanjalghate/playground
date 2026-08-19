@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate test suite — how to show schedules (LCNC-18743 × LCNC-17530)</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   DS TOKEN LAYER — the only place literal colour values appear.
+   Resolved from packages/tailwind-config/_default-theme.scss (light theme).
+   Every rule below uses var(--…) only.
+   ───────────────────────────────────────────────────────────────────── */
+:root{
+  --colors-white:#ffffff;
+  --colors-base-50:#f9fafb;  --colors-base-100:#f3f4f6; --colors-base-200:#e5e7eb;
+  --colors-base-300:#d1d5db; --colors-base-400:#9ca3af; --colors-base-500:#6b7280;
+  --colors-base-600:#4b5563; --colors-base-700:#374151; --colors-base-800:#1f2937;
+  --colors-base-900:#111827;
+  --colors-brand-50:#eff6ff; --colors-brand-100:#dbeafe; --colors-brand-300:#93c5fd;
+  --colors-brand-600:#2563eb; --colors-brand-700:#1d4ed8;
+  --colors-success-50:#ecfdf5; --colors-success-100:#d1fae5; --colors-success-600:#059669; --colors-success-700:#047857;
+  --colors-attention-50:#fffbeb; --colors-attention-100:#fef3c7; --colors-attention-600:#d97706; --colors-attention-800:#92400e;
+  --colors-danger-50:#fef2f2; --colors-danger-100:#fee2e2; --colors-danger-600:#dc2626; --colors-danger-700:#b91c1c;
+
+  --bg-neutral-default:var(--colors-white);
+  --bg-neutral-strong:var(--colors-base-50);
+  --bg-neutral-stronger:var(--colors-base-100);
+  --bg-neutral-strongest:var(--colors-base-200);
+  --text-neutral-default:var(--colors-base-900);
+  --text-neutral-weak:var(--colors-base-700);
+  --text-neutral-weaker:var(--colors-base-500);
+  --text-neutral-weakest:var(--colors-base-400);
+  --border-neutral-weak:var(--colors-base-100);
+  --border-neutral-default:var(--colors-base-200);
+  --border-neutral-strong:var(--colors-base-300);
+  --bg-brand-default:var(--colors-brand-600);
+  --bg-brand-default-hover:var(--colors-brand-700);
+  --bg-brand-weakest:var(--colors-brand-50);
+  --bg-brand-weaker:var(--colors-brand-100);
+  --border-brand-default:var(--colors-brand-600);
+  --text-brand-default:var(--colors-brand-700);
+  --bg-success-weaker:var(--colors-success-100);
+  --text-success-default:var(--colors-success-700);
+  --bg-attention-weakest:var(--colors-attention-50);
+  --bg-attention-weaker:var(--colors-attention-100);
+  --text-attention-default:var(--colors-attention-800);
+  --bg-danger-weakest:var(--colors-danger-50);
+  --text-danger-default:var(--colors-danger-700);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg-neutral-strong);color:var(--text-neutral-default);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px 110px}
+h1,h2,h3,h4{line-height:1.25;margin:0}
+h1{font-size:27px;letter-spacing:-.015em}
+h2{font-size:20px;letter-spacing:-.01em}
+h3{font-size:16px}
+p{margin:.55em 0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+a{color:var(--text-brand-default)}
+
+.mast{padding:34px 0 0}
+.sub{color:var(--text-neutral-weaker);font-size:13.5px;margin-top:7px}
+.kicker{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-neutral-weakest);font-weight:650}
+.lede{color:var(--text-neutral-weak);font-size:14.5px;margin-top:8px;max-width:80ch}
+section.blk{margin-top:46px}
+.banner{margin:18px 0 0;padding:12px 15px;border-radius:8px;font-size:13.5px;
+  background:var(--bg-attention-weakest);border:1px solid var(--colors-attention-100);color:var(--text-attention-default)}
+
+/* definition card */
+.dcard{margin:20px 0 0;border:1px solid var(--border-neutral-default);border-radius:10px;
+  background:var(--bg-neutral-default);overflow:hidden}
+.dcard > .hd{padding:10px 14px;font-size:12px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-default)}
+.dtable{width:100%;border-collapse:collapse}
+.dtable th{text-align:left;vertical-align:top;width:196px;padding:9px 14px;font-size:12.5px;font-weight:600;
+  color:var(--text-neutral-weak);background:var(--bg-neutral-strong);
+  border-bottom:1px solid var(--border-neutral-weak);border-right:1px solid var(--border-neutral-weak)}
+.dtable td{padding:9px 14px;font-size:13.5px;border-bottom:1px solid var(--border-neutral-weak);color:var(--text-neutral-weak)}
+.dtable tr:last-child th,.dtable tr:last-child td{border-bottom:0}
+.src{color:var(--text-neutral-weakest);font-size:12px}
+
+/* N switcher */
+.nbar{position:sticky;top:0;z-index:20;margin:24px 0 0;padding:11px 15px;border-radius:10px;
+  background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  box-shadow:0 4px 14px -8px var(--colors-base-400)}
+.nbar .lbl{font-size:13px;font-weight:650;color:var(--text-neutral-default)}
+.nbar .hint{font-size:12.5px;color:var(--text-neutral-weaker)}
+.nbtn{font:inherit;font-size:13px;font-weight:600;padding:6px 13px;border-radius:7px;cursor:pointer;
+  background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);color:var(--text-neutral-weak)}
+.nbtn:hover{background:var(--bg-neutral-strong)}
+.nbtn[aria-pressed="true"]{background:var(--bg-brand-default);border-color:var(--bg-brand-default);color:var(--colors-white)}
+
+/* option grid */
+.opt{margin-top:34px;border-top:1px solid var(--border-neutral-default);padding-top:24px}
+.ohead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.oid{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 7px;border-radius:5px;
+  background:var(--bg-neutral-strongest);color:var(--text-neutral-weak);font-size:12px;font-weight:700;margin-right:8px;vertical-align:-2px}
+.tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:5px;
+  background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker)}
+.tag.rec{background:var(--bg-brand-weaker);color:var(--text-brand-default)}
+.tag.warn{background:var(--bg-attention-weaker);color:var(--text-attention-default)}
+.tag.no{background:var(--bg-danger-weakest);color:var(--text-danger-default)}
+.obody{display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:26px;margin-top:16px;align-items:start}
+@media(max-width:1080px){.obody{grid-template-columns:1fr}}
+
+/* modal */
+.modal{background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);border-radius:10px;
+  overflow:hidden;box-shadow:0 14px 40px -14px var(--colors-base-400)}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border-neutral-default)}
+.mh .t{font-size:16px;font-weight:650}
+.mh .x{color:var(--text-neutral-weaker);font-size:15px}
+.mb{padding:16px 18px}
+.mf{display:flex;justify-content:flex-end;gap:9px;padding:13px 18px;border-top:1px solid var(--border-neutral-default)}
+.fl{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--text-neutral-weak)}
+.fl .req{color:var(--text-danger-default)}
+.inp{width:100%;padding:9px 11px;font:inherit;font-size:13.5px;border-radius:6px;
+  border:1px solid var(--border-neutral-strong);background:var(--bg-neutral-default);color:var(--text-neutral-default)}
+.dsbtn{font-size:13px;font-weight:600;padding:8px 15px;border-radius:6px;border:1px solid transparent;
+  background:var(--bg-brand-default);color:var(--colors-white);display:inline-flex;align-items:center;gap:6px;cursor:default}
+.dsbtn.white{background:var(--bg-neutral-default);border-color:var(--border-neutral-strong);color:var(--text-neutral-weak)}
+.dsbtn.soft{background:var(--bg-brand-weakest);color:var(--text-brand-default);border-color:transparent}
+.shared{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:14px}
+
+/* schedule area primitives */
+.slist{margin-top:14px;border:1px solid var(--border-neutral-default);border-radius:8px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--border-neutral-weak);
+  background:var(--bg-neutral-default)}
+.srow:last-child{border-bottom:0}
+.srow .meta{min-width:0;flex:1}
+.srow .nm{font-size:13px;font-weight:600;color:var(--text-neutral-default);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.srow .su{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:2px}
+.ib{font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:4px;
+  background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker)}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:4px}
+.badge.warn{background:var(--bg-attention-weaker);color:var(--text-attention-default)}
+.badge.success{background:var(--bg-success-weaker);color:var(--text-success-default)}
+.badge.base{background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker)}
+.icons{display:flex;gap:9px;color:var(--text-neutral-weaker);font-size:13px;flex:none}
+.sum{margin-top:14px;font-size:13px;color:var(--text-neutral-weak);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.amber{margin-top:14px;padding:12px;border-radius:8px;background:var(--bg-attention-weakest);border:1px solid var(--colors-attention-100)}
+.amber .lbl{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-neutral-weak)}
+.box{width:15px;height:15px;border-radius:3px;border:1px solid var(--border-neutral-strong);background:var(--bg-neutral-default);flex:none;margin-top:2px}
+.sub2{font-size:12.5px;color:var(--text-neutral-weaker);margin:5px 0 0 25px}
+.sw{width:32px;height:18px;border-radius:999px;background:var(--bg-neutral-strongest);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--colors-white)}
+.sw.on{background:var(--bg-success-weaker)}
+.sw.on::after{left:16px}
+.discl{margin-top:14px;border:1px solid var(--border-neutral-default);border-radius:8px;background:var(--bg-neutral-default)}
+.discl .top{display:flex;align-items:center;gap:9px;padding:11px 12px;font-size:13px;color:var(--text-neutral-weak)}
+.discl .top .caret{color:var(--text-brand-default);font-weight:650;font-size:12.5px;margin-left:auto}
+.discl .inner{border-top:1px solid var(--border-neutral-weak);padding:4px 0}
+.slabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;color:var(--text-neutral-weakest);margin-top:15px}
+.allon{font-size:12.5px;font-weight:600;color:var(--text-brand-default);margin-top:9px}
+.empty{margin-top:14px;font-size:12.5px;color:var(--text-neutral-weakest);font-style:italic}
+.toast{margin-top:13px;background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);border-radius:9px;padding:13px}
+.toast .tt{font-size:13.5px;font-weight:650}
+.toast .td{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:4px}
+.toast .ta{display:flex;gap:14px;margin-top:9px}
+.toast .ta span{font-size:13px;font-weight:600;color:var(--text-brand-default)}
+
+/* analysis panel */
+.an{border:1px solid var(--border-neutral-default);border-radius:10px;background:var(--bg-neutral-default);overflow:hidden}
+.an .h{padding:9px 13px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-weak)}
+.an .row{display:grid;grid-template-columns:104px 1fr;border-bottom:1px solid var(--border-neutral-weak)}
+.an .row:last-child{border-bottom:0}
+.an .k{padding:9px 12px;font-size:12px;font-weight:600;color:var(--text-neutral-weak);background:var(--bg-neutral-default);
+  border-right:1px solid var(--border-neutral-weak)}
+.an .v{padding:9px 12px;font-size:13px;color:var(--text-neutral-weak)}
+.an .v ul{margin:0;padding-left:17px}
+.an .v li{margin:2px 0}
+.hgt{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.hgt span{font-size:11.5px;padding:2px 7px;border-radius:4px;background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker);
+  font-variant-numeric:tabular-nums}
+
+/* matrices */
+.mtx{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-default);border-radius:10px;overflow:hidden}
+.mtx th{text-align:left;padding:9px 11px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-default)}
+.mtx td{padding:9px 11px;border-bottom:1px solid var(--border-neutral-weak);color:var(--text-neutral-weak)}
+.mtx tr:last-child td{border-bottom:0}
+.mtx td.c{text-align:center;font-weight:650}
+.mtx .rule{color:var(--text-neutral-default);font-weight:600}
+.mtx tr.star td{background:var(--bg-brand-weakest)}
+.note{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:9px;max-width:92ch}
+.na{color:var(--text-neutral-weakest);font-weight:600}
+
+/* reference shell (from screenshots) */
+.refwrap{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media(max-width:1080px){.refwrap{grid-template-columns:1fr}}
+.refbox{border:1px solid var(--border-neutral-strong);border-radius:10px;overflow:hidden;background:var(--bg-neutral-default)}
+.refbox .cap{padding:8px 12px;font-size:11.5px;color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);
+  border-bottom:1px solid var(--border-neutral-weak)}
+.refbox .in{padding:14px}
+.ph2{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border-neutral-default)}
+.ph2 .h{font-size:15px;font-weight:650}
+.crumb{font-size:12px;color:var(--text-neutral-weaker);margin-bottom:3px}
+.metarow{display:flex;gap:14px;font-size:12.5px;color:var(--text-neutral-weaker);padding:9px 14px;border-bottom:1px solid var(--border-neutral-weak)}
+.metarow .on{color:var(--text-brand-default)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <h1>Duplicate a test suite — how should the dialog show schedules?</h1>
+  <div class="sub">
+    LCNC-18743 (Copy test suite) × <a href="https://browserstack.atlassian.net/browse/LCNC-17530">LCNC-17530</a> (Multiple schedules, <b>in Testing</b>, Design + Product GTG 17&nbsp;Aug) ·
+    seven options · <span class="mono">apps/lcnc-webapp/src/features/TestSuites/</span>
+  </div>
+
+  <div class="banner">
+    <b>This is why the earlier design needs revisiting.</b> The Copy Test Suite PRD (FR-5) assumes <b>one</b> schedule and prescribes a single line —
+    “Schedule: Weekdays, 09:00 IST”. Multiple Schedules is already in Testing with product and design sign-off, so a suite will carry <b>N</b> schedules
+    of <b>two different kinds</b>. A one-schedule sentence is wrong by construction, and the interesting design question is no longer
+    <i>whether</i> to mention the schedule but <b>how to show a list of them without turning a create dialog into a settings screen</b>.
+  </div>
+
+  <div class="dcard">
+    <div class="hd">What is fixed, and what is being decided</div>
+    <table class="dtable">
+      <tr><th>Fixed — not up for review</th><td>
+        Name field, pre-filled <span class="mono">Copy of &lt;name&gt;</span> and editable, with the existing per-project uniqueness check ·
+        one line stating tests are shared, not copied ·
+        no “what carries over” block (<b>removed on your instruction</b>) ·
+        no dropped-configuration notice (FR-7 resolved as <i>carry everything</i>)
+      </td></tr>
+      <tr><th>Being decided</th><td><b>The schedule area only.</b> Everything above and below it is identical across all seven options, so the comparison is clean.</td></tr>
+      <tr><th>Constraint from the brief</th><td>A carried schedule <b>must not run</b> until the author enables it, and the dialog must say so. Testim’s cloned schedules turn themselves on and fire — the named anti-pattern.</td></tr>
+      <tr><th>Constraint from the KB</th><td>Interaction friction caps a standard task at <b>4 inputs</b>; 6+ needs redesign. Any option that asks for a decision per schedule spends inputs proportional to N.</td></tr>
+      <tr><th>Scale evidence</th><td>18.1% of paid suites have an active schedule. One account runs <b>nine</b> identical suites named <span class="mono">Taxonomy check 9 AM</span> through <span class="mono">5 PM</span> — under multiple schedules that becomes <b>one suite with nine schedules</b>. That is the stress case, and it is real. <span class="src">source: Copy Test Suite PRD [BQ 90d]</span></td></tr>
+      <tr><th>Vocabulary to reuse</th><td>The shipped Schedules modal already names rows <span class="mono">Schedule 1…N</span>, tags interval ones <span class="ib">Interval</span>, and summarises each in one line. Reuse it — do not invent a second way to describe a schedule. <span class="src">source: your screenshots of LCNC-17530; auto-numbering confirmed in that ticket’s design review</span></td></tr>
+    </table>
+  </div>
+
+  <div class="nbar">
+    <span class="lbl">Schedules on the source suite:</span>
+    <button class="nbtn" data-n="0">0 — none</button>
+    <button class="nbtn" data-n="1">1</button>
+    <button class="nbtn" data-n="3" aria-pressed="true">3</button>
+    <button class="nbtn" data-n="9">9 — the Taxonomy case</button>
+    <span class="hint">Switches every option below at once. <b>0 is the majority case</b> (about four suites in five), 9 is the stress case.</span>
+  </div>
+</header>
+
+<!-- ══════════ REFERENCE ══════════ -->
+<section class="blk" id="reference">
+  <div class="kicker">Reference</div>
+  <h2>What already ships, so options can reuse it</h2>
+  <p class="lede">Both of these are real surfaces from the Multiple Schedules work. Anything an option below borrows from them costs nothing to build; anything it invents is called out.</p>
+  <div class="refwrap">
+    <div class="refbox">
+      <div class="cap">The Schedules modal, reached from the suite header</div>
+      <div class="in">
+        <div class="modal" style="box-shadow:none">
+          <div class="mh"><div class="t">Schedules</div><div class="x">✕</div></div>
+          <div class="mb">
+            <div style="font-size:13px;color:var(--text-neutral-weaker);margin-bottom:4px">Run this suite automatically on multiple schedules.</div>
+            <div class="slist">
+              <div class="srow"><div class="meta"><div class="nm">Schedule 1 <span class="ib">Interval</span></div><div class="su">Every 2 hours from 02:00</div></div><div class="icons"><span>✎</span><span>🗑</span></div></div>
+              <div class="srow"><div class="meta"><div class="nm">Schedule 2</div><div class="su">Wed, Thu · 01:44</div></div><div class="icons"><span>✎</span><span>🗑</span></div></div>
+            </div>
+            <div style="margin-top:12px"><span class="dsbtn soft">＋ Add schedule</span></div>
+          </div>
+          <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn">Save</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="refbox">
+      <div class="cap">The same list inside Edit test suite → Additional configurations</div>
+      <div class="in">
+        <div style="font-size:14px;font-weight:650;margin-bottom:9px">Schedule</div>
+        <div class="slist">
+          <div class="srow"><div class="meta"><div class="nm">Schedule 1</div><div class="su">Tue · 01:45</div></div><div class="icons"><span>✎</span><span>🗑</span></div></div>
+          <div class="srow"><div class="meta"><div class="nm">Schedule 2 <span class="ib">Interval</span></div><div class="su">Every 3 hours from 01:46</div></div><div class="icons"><span>✎</span><span>🗑</span></div></div>
+        </div>
+        <div style="margin-top:12px"><span class="dsbtn soft">＋ Add schedule</span></div>
+        <div style="margin-top:12px;font-size:12.5px;color:var(--text-neutral-weaker)">Trigger test suites with your existing CI tools? <a href="#reference">Learn more</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>Two things worth noticing.</b> First, a schedule’s identity is only a number — <span class="mono">Schedule 1</span> carries no meaning, so a list of nine tells the author very little about which to keep. Second, the row already has a natural right-hand slot (currently edit and delete icons) — which is where a per-schedule control would sit if we wanted one.</div>
+</section>
+
+<!-- ══════════ OPTIONS ══════════ -->
+<section class="blk" id="options">
+  <div class="kicker">The options</div>
+  <h2>Seven ways to show carried schedules</h2>
+  <p class="lede">Each shows the same dialog with only the schedule area swapped. Use the switcher above to change how many schedules the source has — the differences between these options are almost entirely about what happens as that number grows.</p>
+  <div id="optionHost"></div>
+</section>
+
+<!-- ══════════ COMPARE ══════════ -->
+<section class="blk" id="compare">
+  <div class="kicker">Compare</div>
+  <h2>Side by side</h2>
+
+  <table class="mtx">
+    <thead><tr>
+      <th style="width:196px">Option</th>
+      <th style="width:118px">Inputs at N=3</th>
+      <th style="width:112px">Rows at N=9</th>
+      <th style="width:120px">Per-schedule<br>control</th>
+      <th style="width:118px">New UI to<br>build</th>
+      <th>Fidelity to the brief</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="rule">S1 · Count only</td><td class="c">0</td><td class="c">0</td><td class="c">✗</td><td class="c">none</td><td>Says schedules are paused. Never says which — the brief only requires the statement.</td></tr>
+      <tr><td class="rule">S2 · Read-only list</td><td class="c">0</td><td class="c">9</td><td class="c">✗</td><td class="c">none</td><td><b>FR-5 exactly as written</b> — carried, paused, enable later. No control at all.</td></tr>
+      <tr class="star"><td class="rule">S3 · One switch for all</td><td class="c">1</td><td class="c">9</td><td class="c">all-or-nothing</td><td class="c">1 checkbox</td><td>The review’s intent, generalised from one schedule to N.</td></tr>
+      <tr><td class="rule">S4 · Switch per schedule</td><td class="c">up to 3</td><td class="c">9</td><td class="c">✓ full</td><td class="c">N switches</td><td>Exceeds the brief. At N=9 it breaks the 4-input friction cap.</td></tr>
+      <tr class="star"><td class="rule">S5 · Collapsed, expandable</td><td class="c">0 or 1+</td><td class="c">1 → 9</td><td class="c">✓ on demand</td><td class="c">disclosure</td><td>Satisfies the brief closed; offers S4’s control when opened.</td></tr>
+      <tr><td class="rule">S6 · Defer to Schedules modal</td><td class="c">0</td><td class="c">0</td><td class="c">✓ afterwards</td><td class="c">none</td><td>States it in the dialog, then hands over to the surface built for this.</td></tr>
+      <tr><td class="rule">S7 · Don’t carry, offer to</td><td class="c">1</td><td class="c">0</td><td class="c">all-or-nothing</td><td class="c">1 checkbox</td><td><b>Contradicts FR-1 and FR-5</b> — they say schedules <i>are</i> carried.</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>“Inputs” counts only what the author must actively decide</b>, on top of the three the dialog already costs (open the menu, pick Duplicate, submit). <b>“Rows at N=9”</b> is the honest scaling number — it is where four of these options stop being a dialog and start being a settings page.</div>
+
+  <h3 style="margin-top:32px">The trade-off in one sentence each</h3>
+  <div class="dcard">
+    <div class="hd">What you give up by picking each one</div>
+    <table class="dtable">
+      <tr><th>S1 · Count only</th><td>You give up ever letting the author keep a schedule on at duplicate time, and they cannot see which schedules came across without leaving and looking.</td></tr>
+      <tr><th>S2 · Read-only list</th><td>You give up the decision entirely — which is defensible, but the dialog then grows with N for information the author cannot act on.</td></tr>
+      <tr><th>S3 · One switch for all</th><td>You give up granularity: the nine-schedule author must turn all nine on or leave all nine off, and turning all nine on is precisely the parallel-contention harm the brief warns about.</td></tr>
+      <tr><th>S4 · Switch per schedule</th><td>You give up the dialog being a dialog. Nine switches is configuration, and it duplicates a surface that already exists.</td></tr>
+      <tr><th>S5 · Collapsed, expandable</th><td>You give up certainty that the author read it — progressive disclosure means most people never expand. Mitigated because the closed state still states the outcome.</td></tr>
+      <tr><th>S6 · Defer to Schedules modal</th><td>You give up single-step completion: the author lands on a copy whose schedules are all paused and must open another surface to change that.</td></tr>
+      <tr><th>S7 · Don’t carry, offer to</th><td>You give up the brief’s main convenience claim — never retyping cron, timezone and cadence — and you contradict two requirements to get it.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ RECOMMENDATION ══════════ -->
+<section class="blk" id="rec">
+  <div class="kicker">Recommendation</div>
+  <h2>S5 if you want one dialog to handle every N. S3 if you want the smallest change.</h2>
+  <p class="lede">Two are worth taking to review; the rest are useful mainly as the reasoning that eliminated them.</p>
+
+  <div class="dcard">
+    <div class="hd">The two to discuss</div>
+    <table class="dtable">
+      <tr><th>S5 — collapsed,<br>expandable<br><span class="src">the scaling answer</span></th><td>
+        Closed, it is one line and satisfies the brief at any N — including the 80% case where there are no schedules and the row vanishes entirely.
+        Opened, it becomes S4 and gives the nine-schedule author exactly the granularity they need. It is the only option whose cost does not grow with N
+        while still allowing per-schedule control. Cost: a disclosure pattern, and the honest risk that most authors never open it.
+      </td></tr>
+      <tr><th>S3 — one switch<br>for all<br><span class="src">the smallest change</span></th><td>
+        Closest to what the PRD’s review round already argued for, just generalised from one schedule to a list. One decision, one control, no new pattern.
+        It breaks down only at the high end — and the high end is a handful of concentrated accounts, which may be an acceptable trade for a Secondary-importance feature.
+      </td></tr>
+    </table>
+  </div>
+
+  <div class="dcard">
+    <div class="hd">Worth raising in the review, because they change the shape of the answer</div>
+    <table class="dtable">
+      <tr><th>Does the schedule<br>decision belong here<br>at all?</th><td>
+        S6 is the argument that it does not. The Schedules modal already exists, already handles N, both kinds, add, edit and delete —
+        and the copy is going to be edited anyway, since 90% of same-membership suite pairs differ in at least one setting.
+        If product accepts a two-step flow, S6 is the least code and the least new design of any option here.
+      </td></tr>
+      <tr><th>Is “Schedule 3”<br>enough to decide on?</th><td>
+        Schedules are identified only by number. At N=9 the author is asked which of <span class="mono">Schedule 1…9</span> to keep on, with only a cadence line to tell them apart.
+        Any option offering per-schedule control (S4, S5) is offering a choice the labels may not support. <b>This is an argument for nameable schedules</b> — which belongs to LCNC-17530, not here.
+      </td></tr>
+      <tr><th>Interval schedules<br>are the sharper risk</th><td>
+        A day-based schedule fires once; <span class="mono">Every 2 hours from 02:00</span> fires twelve times a day. If a copied interval schedule came across enabled, it would contend
+        for parallels twelve times daily rather than once. Whatever we pick, <b>the paused default matters more for interval schedules</b> — and none of the options currently
+        distinguish the two kinds beyond reusing the <span class="ib">Interval</span> tag.
+      </td></tr>
+      <tr><th>Sequencing between<br>the two tickets</th><td>
+        Multiple Schedules is in Testing; copy-suite has not started. If it ships first, the dialog must be built list-first — every option here assumes that.
+        If the order slips, S1 and S6 are the only two that read correctly against a single schedule <i>and</i> a list, because neither renders per-schedule rows.
+      </td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="blk" id="prov">
+  <div class="kicker">Grounding</div>
+  <h2>Where this came from</h2>
+  <table class="mtx">
+    <thead><tr><th style="width:330px">Source</th><th style="width:104px">Verdict</th><th>What it grounded</th></tr></thead>
+    <tbody>
+      <tr><td>Your screenshots of the Schedules modal and Edit-suite</td><td>✓ read</td><td>The row pattern, <span class="mono">Schedule 1…N</span> numbering, the <span class="ib">Interval</span> tag, both summary formats, add/edit/delete affordances. Every option reuses this rather than inventing a schedule row.</td></tr>
+      <tr><td><a href="https://browserstack.atlassian.net/browse/LCNC-17530">LCNC-17530</a></td><td>✓ read</td><td>Status <b>Testing</b>, Design + Product GTG on 17 Aug, and the design-review request to auto-number schedules. Confirms the model is settled, not speculative.</td></tr>
+      <tr><td>Copy Test Suite PRD — FR-1, FR-5, review round 1 item 2</td><td>✓ read</td><td>The paused-by-default requirement, the Testim anti-pattern, the 18.1% figure, and the nine-suite Taxonomy case.</td></tr>
+      <tr><td class="mono">TestSuites/hooks/useTestSuiteList.jsx</td><td>✓ read</td><td>The shipped badge vocabulary — <b>ON</b>, <b>OFF</b>, <b>PAUSED</b> — reused verbatim, and today’s single-schedule read (<span class="mono">suite.schedule?.cron</span>).</td></tr>
+      <tr><td class="mono">TestSuites/components/SchedulerModal.jsx</td><td>✓ read</td><td>Confirms <b>master is still single-schedule</b> — weekdays plus time compiled to one cron. The multi-schedule code has not merged, so the screenshots are the only source for the new model.</td></tr>
+      <tr><td>Multiple Schedules Task Brief <span class="mono">conf:6295651003</span></td><td>~ inferred</td><td>Cited via the Copy PRD’s boundary section rather than read directly. <b>Check it before build</b> — it may cap how many schedules a suite can hold, which would settle whether N=9 is the real ceiling.</td></tr>
+      <tr><td>Nameable schedules</td><td class="na">not a thing</td><td>Raised above as a gap. No evidence anywhere that schedules can be named — the screenshots show numbers only.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+
+<script>
+(function(){
+  /* Schedule data — formats copied from the shipped Schedules modal. */
+  var POOL=[
+    {n:'Schedule 1', kind:'Interval', su:'Every 2 hours from 02:00'},
+    {n:'Schedule 2', kind:null,       su:'Wed, Thu · 01:44'},
+    {n:'Schedule 3', kind:null,       su:'Weekdays · 09:00'},
+    {n:'Schedule 4', kind:null,       su:'Every day · 10:00'},
+    {n:'Schedule 5', kind:null,       su:'Every day · 11:00'},
+    {n:'Schedule 6', kind:null,       su:'Every day · 13:00'},
+    {n:'Schedule 7', kind:null,       su:'Every day · 15:00'},
+    {n:'Schedule 8', kind:'Interval', su:'Every 2 hours from 09:00'},
+    {n:'Schedule 9', kind:null,       su:'Every day · 17:00'}
+  ];
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+  function set(n){return POOL.slice(0,n)}
+  function rows(list,right){
+    return '<div class="slist">'+list.map(function(s){
+      return '<div class="srow"><div class="meta"><div class="nm">'+esc(s.n)+
+        (s.kind?' <span class="ib">'+esc(s.kind)+'</span>':'')+
+        '</div><div class="su">'+esc(s.su)+'</div></div>'+(right?right(s):'')+'</div>';
+    }).join('')+'</div>';
+  }
+  var word=function(n){return n===1?'schedule':'schedules'};
+
+  /* ── the seven schedule areas ── */
+  var AREAS={
+    S1:function(n){
+      if(!n) return '';
+      return '<div class="sum"><span>'+n+' '+word(n)+' copied —</span><span class="badge warn">PAUSED</span>'+
+             '<span>until you turn them on.</span></div>';
+    },
+    S2:function(n){
+      if(!n) return '';
+      return '<div class="slabel">Schedules copied ('+n+') <span class="badge warn">ALL PAUSED</span></div>'+
+             rows(set(n),null)+
+             '<div class="sub2" style="margin-left:0">Turn these on from the suite’s Schedules settings when the copy is ready.</div>';
+    },
+    S3:function(n){
+      if(!n) return '';
+      return rows(set(n),null)+
+        '<div class="amber"><label class="lbl"><span class="box"></span><span><b>Keep '+(n===1?'the schedule':'all '+n+' schedules')+' on</b></span></label>'+
+        '<div class="sub2">The original runs at the same '+(n===1?'time':'times')+'. Leave this off if you want to change '+(n===1?'it':'them')+' first.</div></div>';
+    },
+    S4:function(n){
+      if(!n) return '';
+      return '<div class="slabel">Which schedules should run?</div>'+
+        rows(set(n),function(){return '<div class="sw" title="off"></div>'})+
+        '<div class="allon">Turn all on</div>'+
+        '<div class="sub2" style="margin-left:0">All off by default. The original runs at these times.</div>';
+    },
+    S5:function(n){
+      if(!n) return '';
+      return '<div class="discl"><div class="top"><span>'+n+' '+word(n)+' copied</span>'+
+        '<span class="badge warn">PAUSED</span>'+
+        '<span class="caret">Review ▾</span></div>'+
+        '<div class="inner">'+rows(set(n),function(){return '<div class="sw"></div>'}).replace('class="slist"','class="slist" style="border:0;border-radius:0"')+
+        '<div class="allon" style="padding:0 12px 10px">Turn all on</div></div></div>';
+    },
+    S6:function(n){
+      if(!n) return '';
+      return '<div class="sum"><span>'+n+' '+word(n)+' copied —</span><span class="badge warn">PAUSED</span></div>'+
+             '<div class="sub2" style="margin-left:0">You can review them right after the copy is made.</div>';
+    },
+    S7:function(n){
+      if(!n) return '';
+      return '<div class="amber"><label class="lbl"><span class="box"></span><span><b>Also copy the '+n+' '+word(n)+'</b> — '+
+        (n===1?'paused':'all paused')+' until you turn '+(n===1?'it':'them')+' on</span></label>'+
+        '<div class="sub2">Leave this off and the copy starts with no schedules at all.</div></div>';
+    }
+  };
+
+  /* extra content shown below the dialog for options that continue after submit */
+  var AFTER={
+    S6:function(n){
+      if(!n) return '';
+      return '<div class="toast"><div class="tt">Duplicated as “Copy of Regression – Staging”</div>'+
+        '<div class="td">'+n+' '+word(n)+' copied, all paused. Tests are shared with the original.</div>'+
+        '<div class="ta"><span>Review schedules</span><span>Dismiss</span></div></div>';
+    }
+  };
+
+  var META=[
+    {id:'S1',title:'Count only — one line, no list',tags:[],
+     beats:'Smallest possible. The dialog is the same height whether the suite has one schedule or nine.',
+     gives:'The author never sees which schedules came across, and cannot keep any on from here.',
+     reuse:['The <b>PAUSED</b> badge, verbatim from the suites list.'],
+     invent:['Nothing.'],
+     h:['N=0 · nothing','N=1 · 1 line','N=3 · 1 line','N=9 · 1 line']},
+
+    {id:'S2',title:'Read-only list — states the facts, offers no choice',tags:[{t:'FR-5 as written',c:''}],
+     beats:'Most faithful to the requirement as literally drafted: carried, paused, enable later. Author sees exactly what came across.',
+     gives:'The dialog grows one row per schedule for information the author cannot act on — nine rows of read-only text.',
+     reuse:['The whole schedule row — name, <span class="ib">Interval</span> tag, summary line.','The <b>PAUSED</b> badge.'],
+     invent:['An “all paused” group label.'],
+     h:['N=0 · nothing','N=1 · 1 row','N=3 · 3 rows','N=9 · 9 rows']},
+
+    {id:'S3',title:'One switch for all of them',tags:[{t:'closest to the PRD review',c:'rec'}],
+     beats:'One decision regardless of N. Generalises the review’s single checkbox to a list without adding a new pattern.',
+     gives:'All-or-nothing. The nine-schedule author cannot keep two and pause seven — and turning all nine on is the exact harm the brief warns about.',
+     reuse:['The schedule rows.','The amber decision block already drawn for the single-schedule design.'],
+     invent:['Pluralised copy that has to read correctly at 1 and at 9.'],
+     h:['N=0 · nothing','N=1 · 1 row + 1 choice','N=3 · 3 rows + 1 choice','N=9 · 9 rows + 1 choice']},
+
+    {id:'S4',title:'A switch on every schedule',tags:[{t:'breaks the friction cap at N=9',c:'warn'}],
+     beats:'Full granularity — the only option that lets the Taxonomy author keep two of nine running.',
+     gives:'The dialog becomes a settings screen, and it duplicates the Schedules modal that already does this job properly.',
+     reuse:['The schedule rows, using the slot where edit and delete icons already sit.'],
+     invent:['A per-row switch in a create dialog.','A “turn all on” shortcut.'],
+     h:['N=0 · nothing','N=1 · 1 choice','N=3 · up to 3 choices','N=9 · up to 9 choices']},
+
+    {id:'S5',title:'One line, expandable to full control',tags:[{t:'scales at any N',c:'rec'}],
+     beats:'The only option whose closed height is flat in N while still offering per-schedule control when opened. Satisfies the brief without being opened.',
+     gives:'Most authors will never expand it — so in practice it behaves like S1 with an escape hatch.',
+     reuse:['The schedule rows.','The <b>PAUSED</b> badge.'],
+     invent:['A disclosure control inside the dialog.','The closed-state summary line.'],
+     h:['N=0 · nothing','N=1 · 1 line','N=3 · 1 line closed','N=9 · 1 line closed']},
+
+    {id:'S6',title:'State it here, decide it in the Schedules modal',tags:[{t:'least new design',c:''}],
+     beats:'Zero new schedule UI. Hands the decision to the surface built for it — which already handles N, both kinds, add, edit and delete.',
+     gives:'Two steps. The copy exists with everything paused before the author touches a schedule.',
+     reuse:['The entire Schedules modal, unchanged.','The <b>PAUSED</b> badge.','The confirmation-toast pattern from clone-test.'],
+     invent:['A “Review schedules” action on the success toast.'],
+     h:['N=0 · nothing','N=1 · 1 line','N=3 · 1 line','N=9 · 1 line']},
+
+    {id:'S7',title:'Start clean — offer to bring them',tags:[{t:'contradicts FR-1 and FR-5',c:'no'}],
+     beats:'Safest possible default: the copy cannot fire anything, because it has no schedules unless asked.',
+     gives:'The brief’s main convenience claim — never retyping cadence, timezone and cron — and two written requirements.',
+     reuse:['The amber decision block.'],
+     invent:['An opt-in whose default contradicts the requirement.'],
+     h:['N=0 · nothing','N=1 · 1 choice','N=3 · 1 choice','N=9 · 1 choice']}
+  ];
+
+  function dialog(id,n){
+    var area=AREAS[id](n);
+    var after=(AFTER[id]?AFTER[id](n):'');
+    var suite=n?'Copy of Regression – Staging':'Copy of Smoke – Checkout';
+    return '<div class="modal">'+
+      '<div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>'+
+      '<div class="mb">'+
+        '<label class="fl">Test suite name <span class="req">*</span></label>'+
+        '<input class="inp" value="'+esc(suite)+'">'+
+        area+
+        '<div class="shared">Tests are shared with the original, not copied.</div>'+
+      '</div>'+
+      '<div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn">Duplicate</span></div>'+
+    '</div>'+after+
+    (n?'':'<div class="empty">At N=0 every option collapses to the same dialog — name, one line, footer. This is what about four suites in five will show.</div>');
+  }
+
+  function analysis(m){
+    return '<div class="an">'+
+      '<div class="h">Analysis</div>'+
+      '<div class="row"><div class="k">Beats the others on</div><div class="v">'+m.beats+'</div></div>'+
+      '<div class="row"><div class="k">Gives up</div><div class="v">'+m.gives+'</div></div>'+
+      '<div class="row"><div class="k">Reuses</div><div class="v"><ul>'+m.reuse.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>'+
+      '<div class="row"><div class="k">New to build</div><div class="v"><ul>'+m.invent.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>'+
+      '<div class="row"><div class="k">Size by N</div><div class="v"><div class="hgt">'+m.h.map(function(x){return '<span>'+x+'</span>'}).join('')+'</div></div></div>'+
+    '</div>';
+  }
+
+  var host=document.getElementById('optionHost');
+  function render(n){
+    host.innerHTML=META.map(function(m){
+      return '<div class="opt" id="opt-'+m.id+'">'+
+        '<div class="ohead"><h2><span class="oid">'+m.id+'</span>'+m.title+'</h2>'+
+        m.tags.map(function(t){return '<span class="tag '+(t.c||'')+'">'+t.t+'</span>'}).join('')+'</div>'+
+        '<div class="obody"><div>'+dialog(m.id,n)+'</div><div>'+analysis(m)+'</div></div>'+
+      '</div>';
+    }).join('');
+  }
+  render(3);
+
+  document.querySelectorAll('.nbtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.nbtn').forEach(function(x){x.setAttribute('aria-pressed', x===b?'true':'false')});
+      render(parseInt(b.getAttribute('data-n'),10));
+    });
+  });
+})();
+</script>
+</body>
+</html>

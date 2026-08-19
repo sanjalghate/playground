@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate test suite — design variations (LCNC-18743)</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   DS TOKEN LAYER — the only place literal colour values appear.
+   Resolved from packages/tailwind-config/_default-theme.scss (light theme:
+   the `base-*` mapping, not the `zinc-*` dark mapping) and its primitive
+   palette. Every rule below this block uses var(--…) only.
+   ───────────────────────────────────────────────────────────────────── */
+:root{
+  /* primitives — packages/tailwind-config/_default-theme.scss */
+  --colors-white:#ffffff;
+  --colors-base-50:#f9fafb;  --colors-base-100:#f3f4f6; --colors-base-200:#e5e7eb;
+  --colors-base-300:#d1d5db; --colors-base-400:#9ca3af; --colors-base-500:#6b7280;
+  --colors-base-600:#4b5563; --colors-base-700:#374151; --colors-base-800:#1f2937;
+  --colors-base-900:#111827;
+  --colors-brand-50:#eff6ff; --colors-brand-100:#dbeafe; --colors-brand-300:#93c5fd;
+  --colors-brand-600:#2563eb; --colors-brand-700:#1d4ed8; --colors-brand-800:#1e40af;
+  --colors-success-50:#ecfdf5; --colors-success-100:#d1fae5; --colors-success-600:#059669; --colors-success-700:#047857;
+  --colors-attention-50:#fffbeb; --colors-attention-100:#fef3c7; --colors-attention-600:#d97706; --colors-attention-700:#b45309; --colors-attention-800:#92400e;
+  --colors-danger-50:#fef2f2; --colors-danger-100:#fee2e2; --colors-danger-600:#dc2626; --colors-danger-700:#b91c1c;
+
+  /* semantic — same file */
+  --bg-neutral-default:var(--colors-white);
+  --bg-neutral-strong:var(--colors-base-50);
+  --bg-neutral-stronger:var(--colors-base-100);
+  --bg-neutral-strongest:var(--colors-base-200);
+  --text-neutral-default:var(--colors-base-900);
+  --text-neutral-weak:var(--colors-base-700);
+  --text-neutral-weaker:var(--colors-base-500);
+  --text-neutral-weakest:var(--colors-base-400);
+  --border-neutral-weak:var(--colors-base-100);
+  --border-neutral-default:var(--colors-base-200);
+  --border-neutral-strong:var(--colors-base-300);
+  --bg-brand-default:var(--colors-brand-600);
+  --bg-brand-default-hover:var(--colors-brand-700);
+  --bg-brand-weakest:var(--colors-brand-50);
+  --bg-brand-weaker:var(--colors-brand-100);
+  --border-brand-default:var(--colors-brand-600);
+  --text-brand-default:var(--colors-brand-700);
+  --bg-success-weakest:var(--colors-success-50);
+  --bg-success-weaker:var(--colors-success-100);
+  --bg-success-default:var(--colors-success-600);
+  --text-success-default:var(--colors-success-700);
+  --bg-attention-weakest:var(--colors-attention-50);
+  --bg-attention-weaker:var(--colors-attention-100);
+  --bg-attention-default:var(--colors-attention-600);
+  --text-attention-default:var(--colors-attention-800);
+  --bg-danger-weakest:var(--colors-danger-50);
+  --bg-danger-weaker:var(--colors-danger-100);
+  --bg-danger-default:var(--colors-danger-600);
+  --text-danger-default:var(--colors-danger-700);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg-neutral-strong);color:var(--text-neutral-default);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px 96px}
+h1,h2,h3,h4{line-height:1.25;margin:0}
+h1{font-size:27px;letter-spacing:-.015em}
+h2{font-size:20px;letter-spacing:-.01em}
+h3{font-size:16px}
+p{margin:.55em 0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+a{color:var(--text-brand-default)}
+hr{border:0;border-top:1px solid var(--border-neutral-default);margin:34px 0}
+
+/* ── masthead ── */
+.mast{padding:34px 0 0}
+.sub{color:var(--text-neutral-weaker);font-size:13.5px;margin-top:7px}
+.banner{
+  margin:18px 0 0;padding:11px 14px;border-radius:8px;font-size:13px;
+  background:var(--bg-attention-weakest);border:1px solid var(--colors-attention-100);
+  color:var(--text-attention-default);
+}
+.banner b{color:var(--text-attention-default)}
+.banner a{color:var(--text-attention-default);text-decoration:underline}
+.banner .gates{display:block;margin-bottom:4px;font-variant-numeric:tabular-nums}
+
+/* ── definition-table card (Decision context / open decisions / JTBD) ── */
+.dcard{
+  margin:20px 0 0;border:1px solid var(--border-neutral-default);border-radius:10px;
+  background:var(--bg-neutral-default);overflow:hidden;
+}
+.dcard > .hd{
+  padding:10px 14px;font-size:12px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);
+  border-bottom:1px solid var(--border-neutral-default);
+}
+.dtable{width:100%;border-collapse:collapse}
+.dtable th{
+  text-align:left;vertical-align:top;width:186px;padding:9px 14px;font-size:12.5px;font-weight:600;
+  color:var(--text-neutral-weak);background:var(--bg-neutral-strong);
+  border-bottom:1px solid var(--border-neutral-weak);border-right:1px solid var(--border-neutral-weak);
+}
+.dtable td{
+  padding:9px 14px;font-size:13.5px;border-bottom:1px solid var(--border-neutral-weak);
+  color:var(--text-neutral-weak);
+}
+.dtable tr:last-child th,.dtable tr:last-child td{border-bottom:0}
+.src{color:var(--text-neutral-weakest);font-size:12px}
+
+/* ── legend + CTA ── */
+.legend{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 0}
+.chip{
+  font-size:12.5px;padding:5px 10px;border-radius:999px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-default);color:var(--text-neutral-weak);
+}
+.cta{
+  display:inline-block;margin:20px 0 0;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;
+  background:var(--bg-brand-default);color:var(--colors-white);text-decoration:none;
+}
+.cta:hover{background:var(--bg-brand-default-hover)}
+
+/* ── sections ── */
+section.blk{margin-top:44px}
+section.blk.tight{margin-top:26px}
+.kicker{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-neutral-weakest);font-weight:650}
+.lede{color:var(--text-neutral-weak);font-size:14.5px;margin-top:8px;max-width:74ch}
+
+/* ── decision table (§1) ── */
+.rtable{width:100%;border-collapse:collapse;margin-top:16px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-default);border-radius:10px;overflow:hidden}
+.rtable thead th{
+  text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);padding:10px 14px;background:var(--bg-neutral-strong);
+  border-bottom:1px solid var(--border-neutral-default);
+}
+.rtable td{padding:13px 14px;font-size:13.5px;vertical-align:top;border-bottom:1px solid var(--border-neutral-weak);color:var(--text-neutral-weak)}
+.rtable tr:last-child td{border-bottom:0}
+.rtable tr.star td{background:var(--bg-brand-weakest)}
+.rtable tr.star td:first-child{box-shadow:inset 3px 0 0 var(--border-brand-default)}
+.vname{font-weight:650;color:var(--text-neutral-default);white-space:nowrap}
+.call{font-weight:650;white-space:nowrap}
+.call.now{color:var(--text-success-default)}
+.call.fallback{color:var(--text-neutral-weak)}
+.call.later{color:var(--text-attention-default)}
+
+/* letter badge — DS neutral, not categorical colour */
+.lb{
+  display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:5px;
+  background:var(--bg-neutral-strongest);color:var(--text-neutral-weak);
+  font-size:12px;font-weight:700;margin-right:7px;vertical-align:-3px;
+}
+.star-mark{color:var(--text-brand-default);font-weight:700}
+
+/* ── variation section ── */
+.vsec{margin-top:40px;border-top:1px solid var(--border-neutral-default);padding-top:26px}
+.vhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.vhead h2{display:flex;align-items:center}
+.tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:5px;
+  background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker)}
+.tag.rec{background:var(--bg-brand-weaker);color:var(--text-brand-default)}
+.tag.flag{background:var(--bg-attention-weaker);color:var(--text-attention-default)}
+.card{
+  margin-top:14px;border:1px solid var(--border-neutral-default);border-radius:10px;
+  background:var(--bg-neutral-default);padding:0;overflow:hidden;
+}
+.crow{display:grid;grid-template-columns:150px 1fr;gap:0;border-bottom:1px solid var(--border-neutral-weak)}
+.crow:last-child{border-bottom:0}
+.crow .k{
+  padding:10px 14px;font-size:12.5px;font-weight:600;color:var(--text-neutral-weak);
+  background:var(--bg-neutral-strong);border-right:1px solid var(--border-neutral-weak);
+}
+.crow .v{padding:10px 14px;font-size:13.5px;color:var(--text-neutral-weak)}
+.scoreline{
+  margin-top:12px;padding:10px 13px;border-radius:8px;background:var(--bg-neutral-stronger);
+  font-size:13px;color:var(--text-neutral-weak);
+}
+.scoreline b{color:var(--text-neutral-default)}
+
+/* ── prototype panel ── */
+.proto{
+  margin:18px 0 0;border:1px solid var(--border-neutral-strong);border-radius:12px;
+  background:var(--bg-neutral-strong);overflow:hidden;
+  width:calc(100% + 120px);margin-left:-60px;
+}
+@media(max-width:1300px){.proto{width:100%;margin-left:0}}
+.proto.fs{
+  position:fixed;inset:0;z-index:90;width:100%;margin:0;border-radius:0;overflow:auto;
+}
+.ptop{
+  display:flex;align-items:center;gap:12px;padding:9px 13px;background:var(--bg-neutral-default);
+  border-bottom:1px solid var(--border-neutral-default);font-size:12.5px;
+}
+.ptop .who{font-weight:650;color:var(--text-neutral-default)}
+.ptop .sp{flex:1}
+.pbtn{
+  font:inherit;font-size:12.5px;padding:5px 11px;border-radius:6px;cursor:pointer;
+  background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);color:var(--text-neutral-weak);
+}
+.pbtn:hover{background:var(--bg-neutral-strong)}
+.pbody{display:grid;grid-template-columns:214px 1fr;gap:0;align-items:start}
+@media(max-width:900px){.pbody{grid-template-columns:1fr}}
+.rail{
+  position:sticky;top:0;padding:11px;background:var(--bg-neutral-default);
+  border-right:1px solid var(--border-neutral-default);
+}
+.rail .rt{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-neutral-weakest);font-weight:650;margin:8px 0 6px}
+.rail .rt:first-child{margin-top:0}
+.rail button{
+  display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;padding:6px 9px;margin-bottom:3px;
+  border-radius:6px;border:1px solid transparent;background:none;color:var(--text-neutral-weak);cursor:pointer;
+}
+.rail button:hover{background:var(--bg-neutral-strong)}
+.rail button[aria-current="true"]{
+  background:var(--bg-brand-weakest);border-color:var(--border-brand-default);
+  color:var(--text-brand-default);font-weight:650;
+}
+.stage{padding:16px 18px 20px;min-width:0}
+.screen{display:none}
+.screen.on{display:block}
+.sk{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-neutral-weakest);font-weight:650}
+.st{font-size:16px;font-weight:650;margin-top:4px;color:var(--text-neutral-default)}
+.si{font-size:13px;color:var(--text-neutral-weaker);margin-top:3px;max-width:78ch}
+
+/* ── live product shell (structure from TestSuiteList.jsx) ── */
+.shell{
+  margin-top:13px;border:1px solid var(--border-neutral-strong);border-radius:9px;overflow:hidden;
+  background:var(--bg-neutral-default);
+}
+.ph{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:16px;background:var(--bg-neutral-default);border-bottom:1px solid var(--border-neutral-default);
+}
+.ph .h{font-size:17px;font-weight:650}
+.dsbtn{
+  font-size:13px;font-weight:600;padding:7px 13px;border-radius:6px;border:1px solid transparent;
+  background:var(--bg-brand-default);color:var(--colors-white);display:inline-flex;align-items:center;gap:6px;cursor:default;
+}
+.dsbtn.white{background:var(--bg-neutral-default);border-color:var(--border-neutral-strong);color:var(--text-neutral-weak)}
+.dsbtn.minimal{background:none;border-color:transparent;color:var(--text-brand-default);padding:5px 8px}
+.dsbtn.minimal[aria-disabled="true"]{color:var(--text-neutral-weakest)}
+.dsbtn[aria-disabled="true"]{background:var(--bg-neutral-strongest);color:var(--text-neutral-weakest)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{
+  text-align:left;font-size:10.5px;letter-spacing:.07em;font-weight:700;color:var(--text-neutral-weaker);
+  padding:9px 14px;background:var(--bg-neutral-default);border-bottom:1px solid var(--border-neutral-default);
+}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border-neutral-weak);vertical-align:middle;color:var(--text-neutral-weak)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.hl td{background:var(--bg-brand-weakest)}
+.sname{font-weight:600;color:var(--text-neutral-default)}
+.sname a{color:inherit;text-decoration:none}
+.dot{display:inline-block;width:4px;height:4px;border-radius:2px;background:var(--bg-neutral-strongest);margin:0 7px;vertical-align:2px}
+.tc{color:var(--text-neutral-weaker)}
+.desc{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:2px}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:4px}
+.badge.success{background:var(--bg-success-weaker);color:var(--text-success-default)}
+.badge.warn{background:var(--bg-attention-weaker);color:var(--text-attention-default)}
+.badge.base{background:var(--bg-neutral-stronger);color:var(--text-neutral-weaker)}
+.brw{font-size:12px;color:var(--text-neutral-weaker)}
+.kebab{color:var(--text-neutral-weaker);font-weight:700;letter-spacing:1px;cursor:default}
+
+/* dropdown */
+.dd{
+  margin-top:6px;display:inline-block;min-width:172px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-default);border-radius:8px;padding:4px;
+  box-shadow:0 6px 18px -6px var(--colors-base-300);
+}
+.dd div{padding:7px 10px;border-radius:5px;font-size:13px;color:var(--text-neutral-weak)}
+.dd div.new{background:var(--bg-brand-weakest);color:var(--text-brand-default);font-weight:650}
+.dd div.dis{color:var(--text-neutral-weakest)}
+
+/* modal */
+.modal{
+  margin:14px auto 0;max-width:540px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-strong);border-radius:10px;overflow:hidden;
+  box-shadow:0 14px 40px -12px var(--colors-base-400);
+}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border-neutral-default)}
+.mh .t{font-size:15.5px;font-weight:650}
+.mh .x{color:var(--text-neutral-weaker)}
+.mb{padding:15px 18px}
+.mf{display:flex;justify-content:flex-end;gap:9px;padding:13px 18px;border-top:1px solid var(--border-neutral-default);background:var(--bg-neutral-default)}
+.fl{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:var(--text-neutral-weak)}
+.fl .req{color:var(--text-danger-default)}
+.inp{
+  width:100%;padding:8px 11px;font:inherit;font-size:13.5px;border-radius:6px;
+  border:1px solid var(--border-neutral-strong);background:var(--bg-neutral-default);color:var(--text-neutral-default);
+}
+.inp.err{border-color:var(--bg-danger-default)}
+.errtext{font-size:12.5px;color:var(--text-danger-default);margin-top:5px}
+.hint{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:5px}
+.pending{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:5px}
+.mnote{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:13px;padding-top:12px;border-top:1px solid var(--border-neutral-weak)}
+.carry{margin-top:14px;border:1px solid var(--border-neutral-default);border-radius:8px;overflow:hidden}
+.carry .ch{padding:7px 11px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-weak)}
+.carry .cr{display:grid;grid-template-columns:118px 1fr;font-size:12.5px;border-bottom:1px solid var(--border-neutral-weak)}
+.carry .cr:last-child{border-bottom:0}
+.carry .cr .a{padding:8px 11px;font-weight:600;color:var(--text-neutral-weak);background:var(--bg-neutral-default)}
+.carry .cr .b{padding:8px 11px;color:var(--text-neutral-weaker)}
+.schedrow{margin-top:14px;padding:12px;border-radius:8px;background:var(--bg-attention-weakest);border:1px solid var(--colors-attention-100)}
+.schedrow .lbl{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--text-neutral-weak)}
+.box{width:15px;height:15px;border-radius:3px;border:1px solid var(--border-neutral-strong);background:var(--bg-neutral-default);flex:none;margin-top:2px}
+.sub2{font-size:12.5px;color:var(--text-neutral-weaker);margin:5px 0 0 24px}
+
+/* toast */
+.toast{
+  margin:14px 0 0;max-width:430px;background:var(--bg-neutral-default);border:1px solid var(--border-neutral-strong);
+  border-radius:9px;padding:13px;box-shadow:0 10px 26px -10px var(--colors-base-400);
+}
+.toast .tt{font-size:13.5px;font-weight:650;color:var(--text-neutral-default)}
+.toast .td{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:4px}
+.toast .ta{display:flex;gap:14px;margin-top:9px}
+.toast .ta span{font-size:13px;font-weight:600;color:var(--text-brand-default)}
+.toast .ta span.mut{color:var(--text-neutral-weaker)}
+.toast.danger{border-color:var(--bg-danger-default);background:var(--bg-danger-weakest)}
+.spin{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid var(--border-neutral-strong);
+  border-top-color:var(--bg-brand-default);vertical-align:-2px;margin-right:6px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* advance affordance */
+.adv{position:relative;cursor:pointer}
+.adv::after{
+  content:"";position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;
+  background:var(--bg-brand-default);box-shadow:0 0 0 0 var(--bg-brand-default);animation:pulse 1.7s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 var(--colors-brand-300)}
+  70%{box-shadow:0 0 0 7px transparent}
+  100%{box-shadow:0 0 0 0 transparent}
+}
+
+/* provenance */
+.prov{margin-top:14px;border:1px solid var(--border-neutral-default);border-radius:9px;overflow:hidden;background:var(--bg-neutral-default)}
+.prov .ph2{padding:8px 12px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-weak)}
+.prov ul{margin:0;padding:8px 12px;list-style:none}
+.prov li{font-size:12.5px;color:var(--text-neutral-weak);padding:4px 0;display:flex;gap:9px;align-items:flex-start}
+.pt{
+  flex:none;font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px;margin-top:1px;
+  border:1px solid var(--border-neutral-strong);color:var(--text-neutral-weaker);background:var(--bg-neutral-default);
+}
+.pt.ex{border-style:solid;border-left-width:3px}
+.pt.fr{border-style:dashed}
+.pt.bet{border-style:dotted;border-left-width:3px}
+.prov .cite{color:var(--text-neutral-weakest);font-size:11.5px}
+.impact{margin-top:12px;font-size:12.5px;color:var(--text-neutral-weak)}
+.impact b{color:var(--text-neutral-default)}
+
+/* matrices */
+.mtx{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px;background:var(--bg-neutral-default);
+  border:1px solid var(--border-neutral-default);border-radius:10px;overflow:hidden}
+.mtx th{text-align:left;padding:9px 11px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;
+  color:var(--text-neutral-weaker);background:var(--bg-neutral-strong);border-bottom:1px solid var(--border-neutral-default)}
+.mtx td{padding:9px 11px;border-bottom:1px solid var(--border-neutral-weak);color:var(--text-neutral-weak)}
+.mtx tr:last-child td{border-bottom:0}
+.mtx td.c{text-align:center;font-weight:650}
+.mtx .rule{color:var(--text-neutral-default);font-weight:600}
+.na{color:var(--text-neutral-weakest);font-weight:600}
+.note{font-size:12.5px;color:var(--text-neutral-weaker);margin-top:9px}
+
+/* TOC */
+#toc{
+  position:fixed;top:26px;left:26px;width:196px;font-size:12.5px;
+  border:1px solid var(--border-neutral-default);border-radius:9px;background:var(--bg-neutral-default);
+  padding:11px;max-height:78vh;overflow:auto;
+}
+#toc .th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-neutral-weakest);font-weight:650;margin-bottom:7px}
+#toc a{display:block;padding:4px 6px;border-radius:5px;color:var(--text-neutral-weak);text-decoration:none;margin-bottom:1px}
+#toc a:hover{background:var(--bg-neutral-strong)}
+#toc a.l2{padding-left:16px;color:var(--text-neutral-weaker)}
+@media(max-width:1560px){#toc{display:none}}
+</style>
+</head>
+<body>
+<nav id="toc" aria-label="Contents"><div class="th">Contents</div></nav>
+
+<div class="wrap">
+
+<!-- ══════════════ MASTHEAD ══════════════ -->
+<header class="mast">
+  <h1>Duplicate a test suite — three ways to do it</h1>
+  <div class="sub">
+    LCNC-18743 · <span class="mono">apps/lcnc-webapp/src/features/TestSuites/</span> ·
+    complexity <b>Standard</b> (1 baseline + 2 improvements) · design-stack from <span class="mono">packages/design-stack</span>
+  </div>
+
+  <div class="banner" role="status">
+    <span class="gates"><b>GATES (advisory):</b> 9 ✅ · 0 ⚠ · 1 — · 4 ⏳ · Ready for review: <b>Yes</b> — <a href="#rigor">full table</a></span>
+    <b>KB:</b> Design <b>present</b> / Product <b>absent</b> → <b>scores are advisory, not authoritative</b>.
+    No <span class="mono">stack-product/lcnc-webapp</span> profile exists, so product-specific rows grade <span class="mono">NA</span> and the ★ rests on 2 of 3 sources
+    (Design KB + JTBD). Fix: ask the LCA product team to add <span class="mono">stack-product/lcnc-webapp</span>.
+    Design KB restored via <span class="mono">npx @browserstack/ai-harness update</span> if it ever goes missing.
+  </div>
+
+  <div class="dcard">
+    <div class="hd">Decision context — the basis this was built on</div>
+    <table class="dtable">
+      <tr><th>Inputs</th><td>
+        <a href="https://browserstack.atlassian.net/browse/LCNC-18743">LCNC-18743</a> (Epic, Dev in Progress) ·
+        <a href="https://browserstack.atlassian.net/wiki/spaces/PROD/pages/6446646335/Copy+Test+Suite+PRD">Copy Test Suite — PRD</a> (Review round 1 open) ·
+        engineer prompt (dialog modelled on “older copy test”) ·
+        Figma: <b>not provided</b>
+      </td></tr>
+      <tr><th>Grounding</th><td>
+        Design KB <b>present</b> (13 rules) → rules real ·
+        Product KB <b>absent</b> → product rows <span class="na">NA</span>, scores <b>advisory</b> ·
+        Live shell <b>read</b> from <span class="mono">TestSuiteList.jsx</span>
+      </td></tr>
+      <tr><th>User job</th><td>Duplicate an existing suite — tests, order and configuration — into the same project, so a near-identical variant isn’t rebuilt by hand. <span class="src">source: PRD problem statement</span></td></tr>
+      <tr><th>Existing flow</th><td>Test Suites list → row <span class="mono">⋮</span> → <b>Edit / Delete only</b>. No duplicate path exists. <span class="src">source: TestSuiteList.jsx:431–500 · useTestSuiteList.jsx:35–44</span></td></tr>
+      <tr><th>Anchor + stance</th><td><span class="mono">TestList/CloneTestModal.jsx</span> — the “older copy test” dialog · stance <b>Conservative (port-faithful)</b> <span class="src">source: engineer prompt, corroborated by PRD FR-4 “the shipped clone-test flow already prompts for an editable name”</span></td></tr>
+      <tr><th>Most-frequent job</th><td><b>Environment variant</b> — 450 sibling pairs (mean overlap 0.49), vs 148 for browser/device matrix. <b>Resolved from data, not assumed.</b> <span class="src">source: PRD “Requirement &amp; Use Cases” [BQ 90d]</span></td></tr>
+      <tr><th>Scope</th><td>Same-project only. Out: cross-project copy · multi-env execution on one suite · device-axis variants · schedule-slot cloning · bulk duplication · duplicate-into-folder. <span class="src">source: PRD Out of scope</span></td></tr>
+      <tr><th>Decisions fixed<br>before this ran</th><td>
+        <b>FR-7 = option D</b> (carry plan-fenced config) → <b>no dropped-config notice designed</b> ·
+        <b>Backend assumed</b>: suite-duplicate endpoint + a third “paused” schedule state → the “keep schedule on” control <b>is</b> in scope.
+        <span class="src">source: intake gate</span>
+      </td></tr>
+      <tr><th>Flow plan</th><td><b>Single flow</b> (“duplicate a suite”), treated as contested. No multi-flow split, no cross-surface handoff.</td></tr>
+      <tr><th>Assumptions<br>flagged</th><td>Sync-vs-async duplication is <b>still open</b> — every variation shows both a synchronous and an asynchronous result state so the choice stays visible.</td></tr>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span class="chip"><b>A</b> — the control: the shipped dialog, ported. 0 invented.</span>
+    <span class="chip"><b>B</b> — beats A on error prevention.</span>
+    <span class="chip"><b>C</b> — beats A on speed, but argues with the brief.</span>
+  </div>
+
+  <a class="cta" href="#variation-B">Go to the recommended option (B) →</a>
+</header>
+
+<!-- ══════════════ 1. RECOMMENDATION ══════════════ -->
+<section class="blk tight" id="recommendation">
+  <div class="kicker">1 · Recommendation</div>
+  <h2>Ship the consequence-first dialog. Keep the plain port as the fallback. Park duplicate-with-undo until someone rules on the brief.</h2>
+  <p class="lede"><b>Job:</b> an author needs the same tests pointed at a different environment, on its own cadence — 450 of the sibling suite pairs in the last 90 days are exactly that, making it the most frequent job by a factor of three.</p>
+
+  <table class="rtable">
+    <thead><tr><th style="width:270px">Variation</th><th style="width:110px">Call</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr class="star">
+        <td><span class="lb">B</span><span class="vname">Consequence-first dialog</span> <span class="star-mark">★</span></td>
+        <td class="call now">Ship now</td>
+        <td>Wins the most-frequent job (environment variant): it is the only option where the author cannot miss that the carried schedule is paused, which is the specific harm the PRD names — two suites firing at the same time on one parallel pool. Also the only variation with <b>no friction dimension below the pass mark</b>, and it satisfies the four Design-KB rules that actually bite here (error handling, journey completeness, microcopy, discoverability). It is A plus one content block and debounced validation — the same modal shell, so the delta is small.</td>
+      </tr>
+      <tr>
+        <td><span class="lb">A</span><span class="vname">Clone-test dialog, as shipped</span></td>
+        <td class="call fallback">Fallback</td>
+        <td>Reference — lowest-risk floor. Invents nothing: it is <span class="mono">CloneTestModal</span> re-pointed at a suite. Ships if B’s extra content block is contested. Costs you prevention: its validation is blur-only and the two consequences read as prose the eye skips.</td>
+      </tr>
+      <tr>
+        <td><span class="lb">C</span><span class="vname">Duplicate now, undo after</span> <span class="tag flag">diverges from brief</span></td>
+        <td class="call later">Later</td>
+        <td>Fastest by a wide margin — one click against A’s four — and it is what the Design KB’s own friction rules point at, since duplicating is reversible and undo beats a confirm dialog. But it removes the dialog the PRD explicitly requires, and with no dialog there is nowhere to run FR-4’s pre-create name check. Needs a human ruling before it can be built, plus inline row-rename and an undo-delete path.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="dcard">
+    <div class="hd">How this pick was made</div>
+    <table class="dtable">
+      <tr><th>Design KB</th><td><b>Fed the pick.</b> Present and read — 13 rules. B satisfies error-handling, journey-completeness, content-and-microcopy and discoverability where A and C each miss at least one.</td></tr>
+      <tr><th>JTBD</th><td><b>Fed the pick, and it is firm.</b> The most-frequent job came from the PRD’s own 90-day query (450 environment pairs vs 148 browser pairs) — not inferred. This is the usual soft spot in a variations run and here it is actually grounded.</td></tr>
+      <tr><th>Product KB</th><td><b>Unavailable — 2 of 3 sources.</b> No <span class="mono">stack-product/lcnc-webapp</span> profile, so every product-specific row grades <span class="na">NA</span> and contributes neither for nor against. The ★ rests on the two sources above.</td></tr>
+      <tr><th>Decisive open question</th><td><b>Is duplication synchronous or asynchronous?</b> The PRD punts it (“judged developer-side”). If it is async, A’s ported progress-toast pattern becomes load-bearing and B must adopt it too — which narrows the gap between them. It does not flip B over C, but it does change what B has to build.</td></tr>
+    </table>
+  </div>
+
+  <div class="dcard">
+    <div class="hd">Open decisions that could change the pick</div>
+    <table class="dtable">
+      <tr><th>Sync or async</th><td>Unresolved in the PRD. Both result states are drawn in every variation so the fork stays visible rather than being quietly decided in code.</td></tr>
+      <tr><th>Does C’s paradigm<br>get a hearing?</th><td>The Design KB says confirmations are for irreversible actions and duplicating a suite is reversible; the PRD says there must be a dialog. Both are legitimate. If the PRD’s author accepts a stated toast as “not silent”, C becomes the strongest option on the two most frequent jobs. <b>This is the single biggest thing that could flip the recommendation.</b></td></tr>
+      <tr><th>Permission gate<br>on the row menu</th><td>The <span class="mono">⋮</span> menu only renders when <span class="mono">canUpdateSuite</span> is true, but Duplicate needs <b>create</b>, not update. A user with create-but-not-update sees no menu, so no Duplicate. <b>Every variation inherits this bug.</b> Needs a real answer, not a tooltip. <span class="src">TestSuiteList.jsx:479</span></td></tr>
+      <tr><th>Plan-side sign-off<br>on FR-7 option D</th><td>Fixed at intake, but it assumes the plan owner accepts that a copy counts as an update. If they refuse, a dropped-config notice returns and every dialog here gets taller.</td></tr>
+      <tr><th>Copy of an<br>unrunnable suite</th><td>A suite holding non-Chrome browsers on a plan without cross-browser cannot run, and the checkboxes that would fix it are disabled by the same flag. The copy inherits that dead end. B draws a warning for it by reusing the shipped tooltip; A and C stay silent. The PRD leaves this unowned.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════ 2. THE VARIATIONS ══════════════ -->
+<section class="blk" id="variations">
+  <div class="kicker">2 · The variations</div>
+  <h2>Baseline first, then the two improvements</h2>
+  <p class="lede">Each section carries its own clickable prototype in the live Test Suites shell. Every prototype opens on <b>today</b> — the real list as it ships now — so each option reads as a diff against production rather than a floating box.</p>
+
+  <!-- ─────────── VARIATION A ─────────── -->
+  <div class="vsec" id="variation-A">
+    <div class="vhead">
+      <h2><span class="lb">A</span>Clone-test dialog — as shipped</h2>
+      <span class="tag">baseline · control</span>
+    </div>
+
+    <div class="card">
+      <div class="crow"><div class="k">Role</div><div class="v">The control — <b>0 invented</b>. B and C are measured against it. This is <span class="mono">CloneTestModal</span> re-pointed at a suite: same shell, same prefill, same footer.</div></div>
+      <div class="crow"><div class="k">Cost</div><div class="v">Prevention. Its name check fires on blur, so a collision surfaces after the author has moved on; and the two consequences (shared tests, paused schedule) are prose lines the eye skips.</div></div>
+      <div class="crow"><div class="k">Sacrifice</div><div class="v">Gives up any claim to guiding the decision — it collects a name and gets out of the way.</div></div>
+      <div class="crow"><div class="k">Components</div><div class="v"><span class="mono">Modal · ModalHeader · ModalBody · InputField · ModalFooter · Button · Dropdown · DropdownOptionItem · Badge · Notifications</span> — all already imported in this feature.</div></div>
+    </div>
+    <div class="scoreline"><b>Friction 4.0</b> · 8 states · trades <b>error prevention</b> for zero deviation · winning trait: <b>nothing to argue about</b>.</div>
+
+    <div class="proto" id="p-A">
+      <div class="ptop">
+        <span class="who"><span class="lb">A</span>Clone-test dialog — as shipped</span>
+        <span class="sp"></span>
+        <button class="pbtn" data-prev="A">← Prev</button>
+        <button class="pbtn" data-next="A">Next →</button>
+        <button class="pbtn" data-fs="p-A">⤢ Fullscreen</button>
+      </div>
+      <div class="pbody">
+        <div class="rail" data-rail="A">
+          <div class="rt">Flow</div>
+          <button data-go="A1" aria-current="true">1 · Today — the list</button>
+          <button data-go="A2">2 · Row menu, with Duplicate</button>
+          <button data-go="A3">3 · The dialog</button>
+          <button data-go="A4">4 · Submitting</button>
+          <div class="rt">States &amp; edge cases</div>
+          <button data-go="A5">Name already in use</button>
+          <button data-go="A6">Empty name — blocked</button>
+          <button data-go="A7">Result — async</button>
+          <button data-go="A8">Result — failed</button>
+        </div>
+        <div class="stage">
+
+          <div class="screen on" id="A1">
+            <div class="sk">A · baseline · today (before)</div>
+            <div class="st">The Test Suites list as it ships today</div>
+            <div class="si">Nothing here is proposed. This is the current surface, read from source, so every later screen is a visible diff against it.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="sname">Regression – Staging</div><div class="desc">Full regression pack, staging env</div></td>
+                    <td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                    <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td>
+                    <td><span class="kebab adv" data-advance="A2">⋮</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="sname">Smoke – Checkout</div></td>
+                    <td>yesterday</td><td><span class="badge base">OFF</span></td>
+                    <td class="brw">Chrome</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="sname">Taxonomy check 9 AM</div></td>
+                    <td>3 days ago</td><td><span class="badge success">ON</span></td>
+                    <td class="brw">Chrome</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Page header “Test Suites” + primary <b>Create test suite</b> button with add icon, permission-gated. <span class="cite">TestSuiteList.jsx — PageHeadings, actions prop</span></div></li>
+                <li><span class="pt ex">existing</span><div>Columns: <b>TEST SUITE</b> (name • <i>n</i> tests, optional description), <b>LAST MODIFIED</b> (relative time), <b>SCHEDULE</b> (badge), plus an unlabelled browsers column. <span class="cite">useTestSuiteList.jsx — testSuiteCols</span></div></li>
+                <li><span class="pt ex">existing</span><div>Schedule badges: <b>ON</b> success · <b>OFF</b> base · <b>PAUSED</b> warn. All three already ship. <span class="cite">useTestSuiteList.jsx — renderBadge</span></div></li>
+                <li><span class="pt ex">existing</span><div><b>Run</b> button (minimal), disabled at zero tests or when cross-browser is not allowed; <span class="mono">⋮</span> trigger. <span class="cite">TestSuiteList.jsx — row render</span></div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Impact on existing elements:</b> none yet — this is production.</div>
+          </div>
+
+          <div class="screen" id="A2">
+            <div class="sk">A · baseline · invocation</div>
+            <div class="st">Duplicate joins the row menu</div>
+            <div class="si">One new item, placed between Edit and Delete so the destructive action stays last.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr><td><div class="sname">Regression – Staging</div><div class="desc">Full regression pack, staging env</div></td>
+                  <td>2 hours ago</td><td><span class="badge success">ON</span></td><td class="brw">Chrome, Firefox</td>
+                  <td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+              <div style="padding:0 14px 16px;display:flex;justify-content:flex-end">
+                <div class="dd">
+                  <div>Edit</div>
+                  <div class="new adv" data-advance="A3">Duplicate</div>
+                  <div>Delete</div>
+                </div>
+              </div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Dropdown, trigger and option rows — unchanged. Menu renders only when <span class="mono">canUpdateSuite</span> is true. <span class="cite">TestSuiteList.jsx:479–497</span></div></li>
+                <li><span class="pt fr">NEW·FR-1</span><div><b>Duplicate</b> option added to the two-item list. <span class="cite">useTestSuiteList.jsx — DropdownOptions</span></div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Impact on existing elements:</b> <b>Edit</b> and <b>Delete</b> kept, unchanged. <b>Displaced:</b> Delete moves from second to third. <b>Inherited defect:</b> the whole menu is gated on <i>update</i> permission, but Duplicate needs <i>create</i> — a create-only user never sees it.</div>
+          </div>
+
+          <div class="screen" id="A3">
+            <div class="sk">A · baseline · happy path</div>
+            <div class="st">The dialog, ported straight from clone-test</div>
+            <div class="si">Name prefilled and editable; the two consequences stated as one line each, exactly as the PRD mockup has them.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Copy of Regression – Staging">
+                <div class="mnote">Schedule: <b>Weekdays, 09:00 IST</b> — copied, but paused until you turn it on.<br>Tests are shared with the original, not copied.</div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn adv" data-advance="A4">Duplicate</span></div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Modal · header with dismiss · body with condensed padding · single mandatory text field · footer right-aligned, white Cancel then primary submit. <b>Ported wholesale.</b> <span class="cite">CloneTestModal.jsx:24–63</span></div></li>
+                <li><span class="pt ex">existing</span><div><span class="mono">Copy of &lt;name&gt;</span> prefill. <span class="cite">useCloneTest.jsx:21</span></div></li>
+                <li><span class="pt fr">NEW·FR-5</span><div>The paused-schedule line, with the source’s time. Required by the brief; row only appears when the source has a schedule (about one suite in five).</div></li>
+                <li><span class="pt fr">NEW·FR-2</span><div>The shared-tests line.</div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Impact on existing elements:</b> nothing on the list changes while the dialog is open. <b>Added beside:</b> a new modal layer. <b>Second height:</b> for the four suites in five with no schedule, the schedule line drops out and the dialog is a name field plus one line.</div>
+          </div>
+
+          <div class="screen" id="A4">
+            <div class="sk">A · baseline · in flight</div>
+            <div class="st">Submitting</div>
+            <div class="si">The ported button’s own loading state. The dialog stays open until the call returns.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Copy of Regression – Staging">
+                <div class="mnote">Schedule: <b>Weekdays, 09:00 IST</b> — copied, but paused until you turn it on.<br>Tests are shared with the original, not copied.</div>
+              </div>
+              <div class="mf"><span class="dsbtn white" aria-disabled="true">Cancel</span><span class="dsbtn" aria-disabled="true"><span class="spin"></span>Duplicate</span></div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Button <span class="mono">loading</span> prop, empty loader text. <span class="cite">CloneTestModal.jsx:55–62</span></div></li>
+                <li><span class="pt fr">NEW·FR</span><div>Cancel disabled while in flight — satisfies the brief’s “serialise duplication per user” so a second submit can’t race.</div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Impact:</b> the list behind is untouched and still interactive.</div>
+          </div>
+
+          <div class="screen" id="A5">
+            <div class="sk">A · baseline · edge case</div>
+            <div class="st">Name already in use</div>
+            <div class="si">The one place A must go beyond its anchor: suite names are unique per project, so the pre-filled name will already be taken the second time you duplicate the same suite. Clone-test has no equivalent because test names are not unique.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp err" value="Copy of Regression – Staging">
+                <div class="errtext">A test suite with this name already exists in this project.</div>
+                <div class="mnote">Schedule: <b>Weekdays, 09:00 IST</b> — copied, but paused until you turn it on.<br>Tests are shared with the original, not copied.</div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn" aria-disabled="true">Duplicate</span></div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Field-level <span class="mono">errorText</span> treatment, as used by suite creation. <span class="cite">CreateSuite/SuiteStepOne.jsx:273</span></div></li>
+                <li><span class="pt ex">existing</span><div>The check itself, and its pending flag — no new endpoint. <span class="cite">TestSuites/slices/uiSlice.js:35 — validateTestSuiteNameThunk</span></div></li>
+                <li><span class="pt fr">NEW·FR-4</span><div>Wiring that check into this dialog, on blur.</div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Cost of the blur timing:</b> the author types, tabs away, then learns. B moves this earlier.</div>
+          </div>
+
+          <div class="screen" id="A6">
+            <div class="sk">A · baseline · boundary</div>
+            <div class="st">Empty name blocks submit</div>
+            <div class="si">Straight port — the anchor disables its submit whenever the field is empty.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="" placeholder="For eg. Landing page">
+                <div class="mnote">Tests are shared with the original, not copied.</div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn" aria-disabled="true">Duplicate</span></div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Submit disabled while the name is empty. <span class="cite">CloneTestModal.jsx:59</span></div></li>
+                <li><span class="pt ex">existing</span><div>Placeholder copy reused from suite creation. <span class="cite">i18n/en.json — test_suite.name_placeholder</span></div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Note:</b> this is also the no-schedule dialog — the shorter of the two heights.</div>
+          </div>
+
+          <div class="screen" id="A7">
+            <div class="sk">A · baseline · result (async branch)</div>
+            <div class="st">If duplication is asynchronous</div>
+            <div class="si">The anchor’s progress-toast pattern, ported. Which branch is real is still an open question — hence both are drawn.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td><td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="toast">
+              <div class="tt"><span class="spin"></span>Duplicating “Copy of Regression – Staging”</div>
+              <div class="td">This may take a few seconds to copy the suite successfully.</div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Progress notification with loader icon and no auto-close. <span class="cite">useCloneTest.jsx:47–54</span></div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Gap A leaves open:</b> the toast never says where the new suite went. On a long list the author has to hunt for it.</div>
+          </div>
+
+          <div class="screen" id="A8">
+            <div class="sk">A · baseline · error</div>
+            <div class="st">Duplication failed</div>
+            <div class="si">Ported error toast — retry is visible rather than buried, which is what the KB asks for.</div>
+            <div class="toast danger">
+              <div class="tt">Couldn’t duplicate the test suite</div>
+              <div class="td">Hang on a moment and try again.</div>
+              <div class="ta"><span>Try again</span><span class="mut">Dismiss</span></div>
+            </div>
+            <div class="prov">
+              <div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Error notification with error icon and Try again / Dismiss as minimal buttons. <span class="cite">useCloneTest.jsx:56–87</span></div></li>
+              </ul>
+            </div>
+            <div class="impact"><b>Preserved:</b> the anchor re-opens its dialog on the generic-exception path, so the typed name isn’t lost.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── VARIATION B ─────────── -->
+  <div class="vsec" id="variation-B">
+    <div class="vhead">
+      <h2><span class="lb">B</span>Consequence-first dialog</h2>
+      <span class="tag rec">★ recommended</span>
+      <span class="tag">improvement · error prevention</span>
+    </div>
+
+    <div class="card">
+      <div class="crow"><div class="k">Beats A on</div><div class="v"><b>Error friction.</b> Three things move: the collision check fires while typing rather than on blur; the carried configuration becomes a scannable three-row block instead of prose; and the copy’s paused schedule is shown in the <i>same</i> badge vocabulary the author will meet in the list a second later. Verified against the KB’s prevention rules, not asserted.</div></div>
+      <div class="crow"><div class="k">Cost</div><div class="v">5 bets, and a taller dialog. Trades the KB’s “combine related inputs / keep it short” pull for explicit consequence disclosure — a deliberate trade the brief asks for.</div></div>
+      <div class="crow"><div class="k">Sacrifice</div><div class="v">Speed. It is exactly as many clicks as A and asks the author to read one more block.</div></div>
+      <div class="crow"><div class="k">Components</div><div class="v">A’s set, plus <span class="mono">Checkbox</span> and the existing <span class="mono">Badge</span> and <span class="mono">Tooltip</span> used inside the dialog and on the new row.</div></div>
+      <div class="crow"><div class="k">Pre-mortem</div><div class="v">“I duplicated the staging suite for production on Friday. Monday morning both of them ran at 09:00 and fought over our parallels.” — the failure A permits and B is built to stop.</div></div>
+    </div>
+    <div class="scoreline"><b>Friction 4.5</b> · 9 states · <b>no dimension below the pass mark</b> · trades brevity for disclosure · winning trait: <b>the author cannot not-know</b>.</div>
+
+    <div class="proto" id="p-B">
+      <div class="ptop">
+        <span class="who"><span class="lb">B</span>Consequence-first dialog</span>
+        <span class="sp"></span>
+        <button class="pbtn" data-prev="B">← Prev</button>
+        <button class="pbtn" data-next="B">Next →</button>
+        <button class="pbtn" data-fs="p-B">⤢ Fullscreen</button>
+      </div>
+      <div class="pbody">
+        <div class="rail" data-rail="B">
+          <div class="rt">Flow</div>
+          <button data-go="B1" aria-current="true">1 · Today — the list</button>
+          <button data-go="B2">2 · Row menu, with Duplicate</button>
+          <button data-go="B3">3 · The dialog</button>
+          <button data-go="B4">4 · Result — the copy lands</button>
+          <div class="rt">States &amp; edge cases</div>
+          <button data-go="B5">Checking the name (typing)</button>
+          <button data-go="B6">Name already in use</button>
+          <button data-go="B7">No schedule — short form</button>
+          <button data-go="B8">Source can’t run — warned</button>
+          <button data-go="B9">Result — failed</button>
+        </div>
+        <div class="stage">
+
+          <div class="screen on" id="B1">
+            <div class="sk">B · improvement · today (before)</div>
+            <div class="st">Same starting point as A</div>
+            <div class="si">Identical production list. B changes what happens after the menu, not the list itself.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr><td><div class="sname">Regression – Staging</div><div class="desc">Full regression pack, staging env</div></td>
+                    <td>2 hours ago</td><td><span class="badge success">ON</span></td><td class="brw">Chrome, Firefox</td>
+                    <td><span class="dsbtn minimal">Run</span></td><td><span class="kebab adv" data-advance="B2">⋮</span></td></tr>
+                  <tr><td><div class="sname">Smoke – Checkout</div></td><td>yesterday</td><td><span class="badge base">OFF</span></td>
+                    <td class="brw">Chrome</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul><li><span class="pt ex">existing</span><div>Entire surface — see A’s first screen for the full citation list.</div></li></ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> none.</div>
+          </div>
+
+          <div class="screen" id="B2">
+            <div class="sk">B · improvement · invocation</div>
+            <div class="st">Duplicate in the row menu, permission made honest</div>
+            <div class="si">Same placement as A. B additionally draws what happens when the author lacks create permission — the case the brief never resolves.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                  <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+              <div style="padding:0 14px 16px;display:flex;justify-content:flex-end;gap:16px">
+                <div class="dd"><div>Edit</div><div class="new adv" data-advance="B3">Duplicate</div><div>Delete</div></div>
+                <div class="dd"><div>Edit</div><div class="dis">Duplicate — needs permission to create suites</div><div>Delete</div></div>
+              </div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Dropdown and its options. <span class="cite">TestSuiteList.jsx:479–497</span></div></li>
+                <li><span class="pt fr">NEW·FR-1</span><div>Duplicate, placed between Edit and Delete.</div></li>
+                <li><span class="pt bet">bet b1</span><div><b>Disabled-with-reason</b> rather than hidden, so the author learns the option exists and why it is unavailable. The brief is silent; the KB’s prevention rules prefer “disable and explain”.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> Edit and Delete kept; Delete displaced to third. <b>Still unresolved:</b> the menu itself is gated on update permission, so this disabled row only appears for a user who has update — the create-only user still sees nothing. Flagged in the open decisions, not solved by any variation here.</div>
+          </div>
+
+          <div class="screen" id="B3">
+            <div class="sk">B · improvement · happy path</div>
+            <div class="st">Name, then what carries over, then the one decision</div>
+            <div class="si">The consequences become a scannable block, and the schedule question is an explicit choice rather than a sentence to notice.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Copy of Regression – Staging">
+                <div class="carry">
+                  <div class="ch">What carries over</div>
+                  <div class="cr"><div class="a">Tests</div><div class="b">Shared with the original — editing a test changes both</div></div>
+                  <div class="cr"><div class="a">Configuration</div><div class="b">Browsers, execution order, environment, notifications — all copied</div></div>
+                  <div class="cr"><div class="a">Schedule</div><div class="b">Copied as <span class="badge warn">PAUSED</span></div></div>
+                </div>
+                <div class="schedrow">
+                  <label class="lbl"><span class="box"></span><span><b>Keep the schedule on</b> — Weekdays, 09:00 IST</span></label>
+                  <div class="sub2">The original runs at the same time. Leave this off if you want to change the time first.</div>
+                </div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn adv" data-advance="B4">Duplicate</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Modal shell, mandatory name field, right-aligned footer with white Cancel — same port as A. <span class="cite">CloneTestModal.jsx:24–63</span></div></li>
+                <li><span class="pt ex">existing</span><div><span class="mono">Copy of &lt;name&gt;</span> prefill. <span class="cite">useCloneTest.jsx:21</span></div></li>
+                <li><span class="pt ex">existing</span><div>The <b>PAUSED</b> warn badge — already shipping in the SCHEDULE column, reused here so the dialog and the list speak the same language. <span class="cite">useTestSuiteList.jsx — renderBadge</span></div></li>
+                <li><span class="pt fr">NEW·FR-5</span><div>The keep-schedule-on control, defaulting to off, with the source’s time beside it. Appears only when the source has a schedule.</div></li>
+                <li><span class="pt bet">bet b2</span><div><b>“What carries over” as three labelled rows</b> instead of two prose lines — the brief’s content, restructured for scanning.</div></li>
+                <li><span class="pt bet">bet b3</span><div><b>Checkbox, not a toggle.</b> A toggle reads as a live setting being flipped now; this is a property of the copy about to be made.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> list untouched behind the modal. <b>Added beside:</b> the carry-over block and the schedule row — the two additions over A. <b>Two heights:</b> with no schedule, the amber row drops entirely and the Schedule line leaves the block.</div>
+          </div>
+
+          <div class="screen" id="B4">
+            <div class="sk">B · improvement · result</div>
+            <div class="st">The copy lands where you can see it</div>
+            <div class="si">Closes the gap A leaves: the new row is inserted, highlighted, and carries the paused badge, so the schedule decision stays visible after the dialog is gone.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr class="hl"><td><div class="sname">Copy of Regression – Staging</div><div class="desc">Full regression pack, staging env</div></td>
+                    <td>just now</td><td><span class="badge warn">PAUSED</span></td><td class="brw">Chrome, Firefox</td>
+                    <td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                  <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                    <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="toast">
+              <div class="tt">Duplicated as “Copy of Regression – Staging”</div>
+              <div class="td">Schedule is paused. Turn it on from the suite’s schedule settings when the copy is ready.</div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Row structure, relative “just now” timestamp, PAUSED badge, notification container. <span class="cite">useTestSuiteList.jsx — testSuiteCols, renderBadge, NOTIFICATIONS</span></div></li>
+                <li><span class="pt fr">NEW·FR-3</span><div>Copy starts clean — no history, owner is the copier, so it sorts to the top by last-modified.</div></li>
+                <li><span class="pt bet">bet b4</span><div><b>Highlight the new row</b> and scroll it into view. The brief says only “new row”; on a hundred-suite list that isn’t enough to find it.</div></li>
+                <li><span class="pt bet">bet b5</span><div><b>Confirmation names the paused state again</b> — the same fact in the dialog, the badge, and the toast. Deliberate redundancy on the one thing that costs money if missed.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> the source row is <b>kept</b>, unchanged. <b>Modified:</b> row order — the copy sorts above its source. <b>Added:</b> one row plus a transient highlight.</div>
+          </div>
+
+          <div class="screen" id="B5">
+            <div class="sk">B · improvement · in flight</div>
+            <div class="st">Checking the name while you type</div>
+            <div class="si">Debounced against the existing check, so a collision is caught before the author reaches the button — the KB’s constrain-then-debounce-then-blur model rather than blur alone.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Regression – Production">
+                <div class="pending"><span class="spin"></span>Checking availability…</div>
+                <div class="carry">
+                  <div class="ch">What carries over</div>
+                  <div class="cr"><div class="a">Tests</div><div class="b">Shared with the original — editing a test changes both</div></div>
+                  <div class="cr"><div class="a">Schedule</div><div class="b">Copied as <span class="badge warn">PAUSED</span></div></div>
+                </div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn" aria-disabled="true">Duplicate</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Validation call and its in-flight flag. <span class="cite">TestSuites/slices/uiSlice.js:35 — validateTestSuiteNameThunk, isTestSuiteNameValidating</span></div></li>
+                <li><span class="pt bet">bet b6</span><div><b>Debounced-while-typing</b> plus submit held during the check. A’s blur timing is the thing being improved on.</div></li>
+              </ul></div>
+            <div class="impact"><b>Note:</b> this screen is also the realistic path for the most frequent job — the author renames the prefill to a production variant.</div>
+          </div>
+
+          <div class="screen" id="B6">
+            <div class="sk">B · improvement · edge case</div>
+            <div class="st">Name already in use</div>
+            <div class="si">Same field-level treatment as suite creation, reached earlier than in A.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp err" value="Copy of Regression – Staging">
+                <div class="errtext">A test suite with this name already exists in this project.</div>
+                <div class="hint">Suite names must be unique within a project.</div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn" aria-disabled="true">Duplicate</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div><span class="mono">errorText</span> on the field. <span class="cite">CreateSuite/SuiteStepOne.jsx:273</span></div></li>
+                <li><span class="pt fr">NEW·FR-4</span><div>Rejecting the name before the copy is created.</div></li>
+                <li><span class="pt bet">bet b7</span><div><b>A standing hint about uniqueness</b>, not only an error after the fact — prevention before correction.</div></li>
+              </ul></div>
+            <div class="impact"><b>Why this matters here:</b> duplicating the same suite twice hits this on the second attempt, because the prefill is deterministic.</div>
+          </div>
+
+          <div class="screen" id="B7">
+            <div class="sk">B · improvement · the common case</div>
+            <div class="st">No schedule — the short form</div>
+            <div class="si">Four suites in five have no schedule. This is what most authors actually see, and it is barely longer than A.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Copy of Smoke – Checkout">
+                <div class="carry">
+                  <div class="ch">What carries over</div>
+                  <div class="cr"><div class="a">Tests</div><div class="b">Shared with the original — editing a test changes both</div></div>
+                  <div class="cr"><div class="a">Configuration</div><div class="b">Browsers, execution order, environment, notifications — all copied</div></div>
+                </div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn">Duplicate</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt fr">NEW·FR-5</span><div>Schedule row and Schedule line both absent — conditional on the source having a schedule.</div></li>
+                <li><span class="pt bet">bet b2</span><div>The carry-over block persists even with nothing to warn about, so the pattern is consistent across both heights.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> this is the dialog’s default shape. The amber schedule row is the exception, not the rule.</div>
+          </div>
+
+          <div class="screen" id="B8">
+            <div class="sk">B · improvement · boundary</div>
+            <div class="st">The source can’t run — so the copy won’t either</div>
+            <div class="si">The one case the brief flags as unowned: a suite holding browsers the plan no longer allows cannot run, and the controls that would fix it are disabled by the same flag. B says so instead of handing over a copy that is dead on arrival.</div>
+            <div class="modal">
+              <div class="mh"><div class="t">Duplicate test suite</div><div class="x">✕</div></div>
+              <div class="mb">
+                <label class="fl">Test suite name <span class="req">*</span></label>
+                <input class="inp" value="Copy of Regression – Staging">
+                <div class="schedrow">
+                  <div class="lbl"><span><b>This suite can’t run on your current plan.</b> It uses Firefox, which cross-browser testing covers. The copy will have the same problem.</span></div>
+                </div>
+                <div class="carry">
+                  <div class="ch">What carries over</div>
+                  <div class="cr"><div class="a">Tests</div><div class="b">Shared with the original — editing a test changes both</div></div>
+                  <div class="cr"><div class="a">Configuration</div><div class="b">Browsers, execution order, environment, notifications — all copied</div></div>
+                </div>
+              </div>
+              <div class="mf"><span class="dsbtn white">Cancel</span><span class="dsbtn">Duplicate anyway</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>The unrunnable-suite condition and its explanatory tooltip already ship on the Run button. <span class="cite">TestSuiteList.jsx — isCBTNotAllowed + TestSuiteTooltip</span></div></li>
+                <li><span class="pt bet">bet b8</span><div><b>Surfacing that condition in the dialog</b>, and labelling the submit “Duplicate anyway”. Inherited condition, new placement. Does not block the copy — the brief’s rule is never to block.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> reuses a shipped condition rather than adding a new one. <b>Open:</b> whether Duplicate should instead strip run-blocking configuration — the brief leaves this to the team.</div>
+          </div>
+
+          <div class="screen" id="B9">
+            <div class="sk">B · improvement · error</div>
+            <div class="st">Duplication failed</div>
+            <div class="si">Same ported recovery as A — visible retry, typed name preserved.</div>
+            <div class="toast danger">
+              <div class="tt">Couldn’t duplicate “Copy of Regression – Staging”</div>
+              <div class="td">Nothing was created. Your name and schedule choice are still here.</div>
+              <div class="ta"><span>Try again</span><span class="mut">Dismiss</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Error toast with Try again / Dismiss. <span class="cite">useCloneTest.jsx:56–87</span></div></li>
+                <li><span class="pt bet">bet b9</span><div><b>Says nothing was created</b> and that input survived — the KB’s input-preservation rule made visible rather than merely implemented.</div></li>
+              </ul></div>
+            <div class="impact"><b>Preserved:</b> name and schedule choice both survive a failed submit.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── VARIATION C ─────────── -->
+  <div class="vsec" id="variation-C">
+    <div class="vhead">
+      <h2><span class="lb">C</span>Duplicate now, undo after</h2>
+      <span class="tag flag">⚠ diverges from the brief — needs a ruling</span>
+      <span class="tag">improvement · repeated-use speed</span>
+    </div>
+
+    <div class="card">
+      <div class="crow"><div class="k">Beats A on</div><div class="v"><b>Interaction and interruption friction.</b> One click against A’s four, and no modal at all. For the five accounts that hold 44% of all duplicate suites, that difference compounds every time.</div></div>
+      <div class="crow"><div class="k">Cost</div><div class="v">4 bets, and it argues with the brief. The PRD requires a dialog resolving the name and the schedule; C removes it and states both in a toast instead. It also has nowhere to run the pre-create name check, so collisions must be auto-resolved rather than rejected.</div></div>
+      <div class="crow"><div class="k">Sacrifice</div><div class="v">Deliberate disclosure. The author can complete the whole action without reading anything.</div></div>
+      <div class="crow"><div class="k">Components</div><div class="v">A’s set minus the modal, plus an inline-editable row name and an undo action in the notification.</div></div>
+      <div class="crow"><div class="k">Why it exists</div><div class="v">The Design KB is explicit that confirmations are for irreversible actions and that undo beats a confirm dialog. Duplicating a suite is reversible. C is what that rule produces if followed — which is worth seeing even if the brief wins.</div></div>
+    </div>
+    <div class="scoreline"><b>Friction 4.5</b> · 7 states · <b>error dimension below the pass mark</b> (no pre-create validation) · trades disclosure for speed · winning trait: <b>one click</b>.</div>
+
+    <div class="proto" id="p-C">
+      <div class="ptop">
+        <span class="who"><span class="lb">C</span>Duplicate now, undo after</span>
+        <span class="sp"></span>
+        <button class="pbtn" data-prev="C">← Prev</button>
+        <button class="pbtn" data-next="C">Next →</button>
+        <button class="pbtn" data-fs="p-C">⤢ Fullscreen</button>
+      </div>
+      <div class="pbody">
+        <div class="rail" data-rail="C">
+          <div class="rt">Flow</div>
+          <button data-go="C1" aria-current="true">1 · Today — the list</button>
+          <button data-go="C2">2 · Row menu, with Duplicate</button>
+          <button data-go="C3">3 · Copy exists, name editable</button>
+          <button data-go="C4">4 · Renamed, settled</button>
+          <div class="rt">States &amp; edge cases</div>
+          <button data-go="C5">Name taken — auto-suffixed</button>
+          <button data-go="C6">Undo pressed</button>
+          <button data-go="C7">Result — failed</button>
+        </div>
+        <div class="stage">
+
+          <div class="screen on" id="C1">
+            <div class="sk">C · improvement · today (before)</div>
+            <div class="st">Same starting point</div>
+            <div class="si">Identical production list. What changes is that the menu item acts instead of asking.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr><td><div class="sname">Regression – Staging</div><div class="desc">Full regression pack, staging env</div></td>
+                    <td>2 hours ago</td><td><span class="badge success">ON</span></td><td class="brw">Chrome, Firefox</td>
+                    <td><span class="dsbtn minimal">Run</span></td><td><span class="kebab adv" data-advance="C2">⋮</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul><li><span class="pt ex">existing</span><div>Entire surface — see A’s first screen for citations.</div></li></ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> none.</div>
+          </div>
+
+          <div class="screen" id="C2">
+            <div class="sk">C · improvement · invocation</div>
+            <div class="st">Duplicate acts immediately</div>
+            <div class="si">No dialog follows. The click is the whole interaction.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                  <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+              <div style="padding:0 14px 16px;display:flex;justify-content:flex-end">
+                <div class="dd"><div>Edit</div><div class="new adv" data-advance="C3">Duplicate</div><div>Delete</div></div>
+              </div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Dropdown and options. <span class="cite">TestSuiteList.jsx:479–497</span></div></li>
+                <li><span class="pt fr">NEW·FR-1</span><div>Duplicate option.</div></li>
+                <li><span class="pt bet">bet c1</span><div><b>No dialog.</b> The action fires on click. <b>This is the divergence</b> — the brief requires a dialog.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> Edit and Delete kept. <b>Removed:</b> the confirm step the brief mandates.</div>
+          </div>
+
+          <div class="screen" id="C3">
+            <div class="sk">C · improvement · happy path</div>
+            <div class="st">The copy already exists, and its name is editable in place</div>
+            <div class="si">The row is created, focused, and the name is a live field. Both consequences are stated in the toast rather than a dialog.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr class="hl"><td><input class="inp" style="max-width:270px" value="Copy of Regression – Staging"></td>
+                    <td>just now</td><td><span class="badge warn">PAUSED</span></td><td class="brw">Chrome, Firefox</td>
+                    <td><span class="dsbtn minimal" aria-disabled="true">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                  <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                    <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="toast">
+              <div class="tt">Duplicated as “Copy of Regression – Staging”</div>
+              <div class="td">Tests are shared with the original. Schedule copied but paused.</div>
+              <div class="ta"><span class="adv" data-advance="C4">Rename</span><span>Undo</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>Row structure, PAUSED badge, notification with action buttons. <span class="cite">useTestSuiteList.jsx — renderBadge · useCloneTest.jsx:62–83</span></div></li>
+                <li><span class="pt fr">NEW·FR-3</span><div>Copy starts clean; owner is the copier.</div></li>
+                <li><span class="pt bet">bet c2</span><div><b>Inline-editable name in the row.</b> No such affordance exists in this table today — it is a new component behaviour, not a re-use.</div></li>
+                <li><span class="pt bet">bet c3</span><div><b>Undo in the notification</b>, deleting the copy. Follows the KB’s undo-over-confirm rule.</div></li>
+                <li><span class="pt bet">bet c4</span><div><b>Both consequences in the toast.</b> Stated, so this is not silent copying — but stated <i>after</i> the fact, which is the part the brief would contest.</div></li>
+              </ul></div>
+            <div class="impact"><b>Impact on existing elements:</b> source row <b>kept</b>. <b>Modified:</b> the name cell becomes an input for one row — a real change to a shipped table cell. <b>Added:</b> a row and a toast with two actions.</div>
+          </div>
+
+          <div class="screen" id="C4">
+            <div class="sk">C · improvement · settled</div>
+            <div class="st">Renamed, and the paused badge is the only reminder left</div>
+            <div class="si">After the toast clears, the paused badge in the SCHEDULE column is the sole remaining signal that a schedule was carried.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl">
+                <thead><tr><th>TEST SUITE</th><th>LAST MODIFIED</th><th>SCHEDULE</th><th></th><th></th><th></th></tr></thead>
+                <tbody>
+                  <tr><td><div class="sname">Regression – Production</div></td><td>just now</td><td><span class="badge warn">PAUSED</span></td>
+                    <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                  <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                    <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt ex">existing</span><div>PAUSED badge carries the state in the list. <span class="cite">useTestSuiteList.jsx — renderBadge</span></div></li>
+                <li><span class="pt bet">bet c2</span><div>Inline rename committed on blur.</div></li>
+              </ul></div>
+            <div class="impact"><b>Reached the most frequent job in one click plus a rename</b> — against four clicks in A and B. <b>Risk:</b> if the toast is dismissed unread, nothing ever told the author the tests are shared.</div>
+          </div>
+
+          <div class="screen" id="C5">
+            <div class="sk">C · improvement · edge case</div>
+            <div class="st">Name taken — resolved automatically</div>
+            <div class="si">With no dialog there is nowhere to reject a name, so a collision has to be resolved rather than reported. This is a direct conflict with the brief’s requirement to reject a duplicate name before the copy is created.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr class="hl"><td><input class="inp" style="max-width:270px" value="Copy of Regression – Staging (2)"></td>
+                  <td>just now</td><td><span class="badge warn">PAUSED</span></td><td class="brw">Chrome, Firefox</td>
+                  <td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="toast">
+              <div class="tt">Duplicated as “Copy of Regression – Staging (2)”</div>
+              <div class="td">That name was taken, so a number was added. Rename it if you like.</div>
+              <div class="ta"><span>Rename</span><span>Undo</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt bet">bet c5</span><div><b>Numeric suffix on collision.</b> The competitor sweep in the brief notes this is what one competitor’s row action does — but the brief chose rejection over auto-naming. <b>Flagged divergence.</b></div></li>
+              </ul></div>
+            <div class="impact"><b>This screen is why C is parked.</b> It cannot satisfy the brief’s name-check requirement without reintroducing a dialog.</div>
+          </div>
+
+          <div class="screen" id="C6">
+            <div class="sk">C · improvement · reversal</div>
+            <div class="st">Undo removes the copy</div>
+            <div class="si">The safety net that justifies acting first. It only works while the toast is on screen.</div>
+            <div class="shell">
+              <div class="ph"><div class="h">Test Suites</div><span class="dsbtn">＋ Create test suite</span></div>
+              <table class="tbl"><tbody>
+                <tr><td><div class="sname">Regression – Staging</div></td><td>2 hours ago</td><td><span class="badge success">ON</span></td>
+                  <td class="brw">Chrome, Firefox</td><td><span class="dsbtn minimal">Run</span></td><td><span class="kebab">⋮</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="toast"><div class="tt">Duplicate removed</div><div class="td">“Copy of Regression – Staging” was deleted.</div></div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul>
+                <li><span class="pt bet">bet c3</span><div>Undo deletes the copy. Needs a delete path wired to the notification, and a decision about what happens once the toast expires.</div></li>
+              </ul></div>
+            <div class="impact"><b>Open question C creates:</b> after the toast goes, the only way back is the normal Delete — which is fine, but means the “undo” window is short and undocumented.</div>
+          </div>
+
+          <div class="screen" id="C7">
+            <div class="sk">C · improvement · error</div>
+            <div class="st">Duplication failed</div>
+            <div class="si">Nothing was typed, so there is no input to preserve — the retry is simply the same one click.</div>
+            <div class="toast danger">
+              <div class="tt">Couldn’t duplicate “Regression – Staging”</div>
+              <div class="td">Nothing was created.</div>
+              <div class="ta"><span>Try again</span><span class="mut">Dismiss</span></div>
+            </div>
+            <div class="prov"><div class="ph2">Where every element comes from</div>
+              <ul><li><span class="pt ex">existing</span><div>Error toast with Try again / Dismiss. <span class="cite">useCloneTest.jsx:56–87</span></div></li></ul></div>
+            <div class="impact"><b>One genuine advantage:</b> with no form there is no form state to lose.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 3. COMPARE ══════════════ -->
+<section class="blk" id="compare">
+  <div class="kicker">3 · Compare</div>
+  <h2>Three cuts: rules, jobs, friction</h2>
+  <p class="lede">Read across a row for the per-rule winner; down a column for a variation’s whole profile.</p>
+
+  <h3 style="margin-top:26px">Design-KB rules × variations</h3>
+  <table class="mtx">
+    <thead><tr><th style="width:290px">Rule (Design KB order)</th><th class="c" style="width:80px">A</th><th class="c" style="width:80px">B</th><th class="c" style="width:80px">C</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td class="rule">usability-heuristics</td><td class="c">✅</td><td class="c">✅</td><td class="c">⚠️</td><td>C acts before the author has seen the consequences</td></tr>
+      <tr><td class="rule">ui-anti-patterns</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td>None of the three introduces a rejected pattern</td></tr>
+      <tr><td class="rule">error-handling</td><td class="c">⚠️</td><td class="c">✅</td><td class="c">⚠️</td><td>A validates on blur only; C cannot validate before creating</td></tr>
+      <tr><td class="rule">journey-completeness</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td>All three carry start, happy, empty-name/collision, error</td></tr>
+      <tr><td class="rule">content-and-microcopy</td><td class="c">⚠️</td><td class="c">✅</td><td class="c">⚠️</td><td>A buries consequences in prose; C states them after the fact</td></tr>
+      <tr><td class="rule">frictionless-framework</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td>All within the 4-input cap; see the friction cut below</td></tr>
+      <tr><td class="rule">gestalt-and-visual-hierarchy</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td>B groups carried config; A and C have little to group</td></tr>
+      <tr><td class="rule">ai-ux-principles</td><td class="c na">NA</td><td class="c na">NA</td><td class="c na">NA</td><td>Not an AI feature — the brief says so explicitly</td></tr>
+      <tr><td class="rule">ai-branding-compliance</td><td class="c na">NA</td><td class="c na">NA</td><td class="c na">NA</td><td>Same</td></tr>
+      <tr><td class="rule">scalability-patterns</td><td class="c">⚠️</td><td class="c">✅</td><td class="c">✅</td><td>Only A leaves the copy unfindable on a long list</td></tr>
+      <tr><td class="rule">discoverability-patterns</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td>All put Duplicate where the author already looks</td></tr>
+      <tr><td class="rule">cross-feature-consistency</td><td class="c">✅</td><td class="c">✅</td><td class="c">⚠️</td><td>C introduces inline row editing, absent from this product’s tables</td></tr>
+      <tr><td class="rule">delight</td><td class="c na">NA</td><td class="c na">NA</td><td class="c na">NA</td><td>No delight intervention proposed, so the gate has nothing to judge</td></tr>
+      <tr><td class="rule">product:lcnc-webapp</td><td class="c na">NA</td><td class="c na">NA</td><td class="c na">NA</td><td>No product profile installed</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>Why the NA rows are NA:</b> the two AI rules and <span class="mono">delight</span> have nothing in scope to grade — this is not an AI surface and no polish intervention is proposed. <span class="mono">product:lcnc-webapp</span> has no baseline because no profile is installed. Accessibility and design-token correctness are <b>delegated</b>, not dropped — they are gated later by the accessibility audit and the validate step. <b>Tally: 8 graded rules, 3 NA, 3 delegated.</b></div>
+
+  <h3 style="margin-top:30px">Which option wins which job</h3>
+  <div class="dcard">
+    <div class="hd">JTBD ranking — jobs from the brief, with their 90-day frequencies</div>
+    <table class="dtable">
+      <tr><th>Different environment<br><span class="src">450 pairs — most frequent</span></th><td><b>B</b> — the whole point is a second cadence against a second environment; B is the only option where the author is made to decide about the schedule rather than notice it.</td></tr>
+      <tr><th>Different browser matrix<br><span class="src">148 pairs</span></th><td><b>B</b> — same reasoning; the copy is edited before it should ever run.</td></tr>
+      <tr><th>Keep this release cycle’s<br>suite while starting the next</th><td><b>C</b> — repetitive and predictable; one click beats four, and the name pattern is mechanical.</td></tr>
+      <tr><th>Start from a suite that<br>shares most of its tests</th><td><b>C</b> — membership is going to be edited immediately anyway, so land in the row fastest.</td></tr>
+      <tr><th>Hand a copy to a colleague</th><td><b>A</b> — least machinery; the copy is handed over, not iterated on, and naming it up front is the whole task.</td></tr>
+    </table>
+  </div>
+
+  <h3 style="margin-top:30px">Friction detail — five dimensions, pass mark 4</h3>
+  <table class="mtx">
+    <thead><tr><th style="width:200px">Dimension</th><th class="c" style="width:80px">A</th><th class="c" style="width:80px">B</th><th class="c" style="width:80px">C</th><th>Basis</th></tr></thead>
+    <tbody>
+      <tr><td class="rule">Interaction</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td>A/B: menu → Duplicate → edit name → submit = 4, at the cap for a standard task. C: 1.</td></tr>
+      <tr><td class="rule">Interruption</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td>A/B: one purposeful modal — “acceptable”. C: zero.</td></tr>
+      <tr><td class="rule">Error</td><td class="c">3</td><td class="c">5</td><td class="c">3</td><td>Prevention over messages. A validates on blur; B debounces while typing and preserves input; C cannot validate pre-create.</td></tr>
+      <tr><td class="rule">Setup</td><td class="c">5</td><td class="c">5</td><td class="c">5</td><td>No setup path involved.</td></tr>
+      <tr><td class="rule">Performance</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td>Needs a rendered build; graded at the validate stage.</td></tr>
+      <tr><td class="rule"><b>Aggregate</b></td><td class="c"><b>4.0</b></td><td class="c"><b>4.5</b></td><td class="c"><b>4.5</b></td><td><b>B is the only one with no dimension below the pass mark</b> — which is what breaks the tie with C.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════ 4. RIGOR ══════════════ -->
+<section class="blk" id="rigor">
+  <div class="kicker">4 · Rigor</div>
+  <h2>Gates and where every claim came from</h2>
+
+  <h3 style="margin-top:22px">Structural gates</h3>
+  <table class="mtx">
+    <thead><tr><th style="width:210px">Gate</th><th style="width:90px">Result</th><th>What was checked</th></tr></thead>
+    <tbody>
+      <tr><td class="rule">existing-flow-grounding</td><td>✅ pass</td><td>Every variation opens on the real production list read from <span class="mono">TestSuiteList.jsx</span>, and each screen states what it keeps, modifies, displaces or adds.</td></tr>
+      <tr><td class="rule">source-grounding</td><td>✅ pass</td><td>A ports a source that was actually opened and read; inferred items are labelled.</td></tr>
+      <tr><td class="rule">distinct-metric</td><td>✅ pass</td><td>B targets error friction; C targets interaction and interruption friction. No overlap.</td></tr>
+      <tr><td class="rule">count-shape</td><td>✅ pass</td><td>Standard → 1 baseline + 2 improvements.</td></tr>
+      <tr><td class="rule">prototype-links</td><td>✅ pass</td><td>Each variation’s prototype sits in its own section; the masthead call-to-action targets the recommended one.</td></tr>
+      <tr><td class="rule">state-coverage</td><td>✅ pass</td><td>A 8 states · B 9 · C 7 — each with start, happy path, collision, boundary and error in its own rail.</td></tr>
+      <tr><td class="rule">flow-coverage</td><td>✅ pass</td><td>Single flow, treated as contested. Nothing dropped.</td></tr>
+      <tr><td class="rule">handoff-grounding</td><td class="na">NA</td><td>Single surface — no cross-surface handoff to ground.</td></tr>
+      <tr><td class="rule">anchor-grounding</td><td>✅ pass</td><td>A carries 0 bets. B carries 9. C carries 5, one of which is flagged against the brief.</td></tr>
+      <tr><td class="rule">requirement-coverage</td><td>✅ pass</td><td>FR-1 through FR-6 all drawn or annotated. FR-7 dispositioned as <b>skipped by decision</b> (option D carries everything, so there is no notice to draw). 0 unaccounted.</td></tr>
+      <tr><td class="rule">design-token-purity</td><td>✅ pass</td><td>Colour values appear only in the cited token block at the top of the stylesheet, resolved from <span class="mono">packages/tailwind-config/_default-theme.scss</span>. Every rule below it uses <span class="mono">var(--…)</span>. A standalone file has to define its palette somewhere; it is confined to one cited block rather than scattered.</td></tr>
+      <tr><td class="rule">accessibility</td><td>⏳ pending</td><td>Needs a rendered build — the accessibility audit owns it. The brief requires keyboard operation, focus management, and an accessible name on the validation error.</td></tr>
+      <tr><td class="rule">visual regression</td><td>⏳ pending</td><td>Needs code.</td></tr>
+      <tr><td class="rule">performance</td><td>⏳ pending</td><td>Needs code.</td></tr>
+      <tr><td class="rule">design-system drift</td><td>⏳ pending</td><td>Component selection is the next step’s job; this report names candidates, it does not pick them.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:30px">Source grounding</h3>
+  <p class="lede">The baseline invents nothing — it is assembled from patterns that already ship. This table is the receipt. <b>✓ read</b> means the file was opened and the claim matches it as written, so trust it. <b>~ inferred</b> means the source is named but was not read line-for-line, so exact behaviour is a guess. <b>Reviewer action: check only the <span class="mono">~ inferred</span> rows before build; the <span class="mono">✓ read</span> rows need nothing.</b></p>
+  <table class="mtx">
+    <thead><tr><th style="width:330px">Source</th><th style="width:110px">Verdict</th><th>What it grounded</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">TestList/components/CloneTestModal.jsx</td><td>✓ read</td><td>The whole modal shell for A and B — header with dismiss, condensed body, mandatory field, right footer, white Cancel, submit disabled while empty.</td></tr>
+      <tr><td class="mono">TestList/hooks/useCloneTest.jsx</td><td>✓ read</td><td><span class="mono">Copy of &lt;name&gt;</span> prefill, the progress-toast pattern, and the Try again / Dismiss error toast.</td></tr>
+      <tr><td class="mono">TestSuites/components/TestSuiteList.jsx</td><td>✓ read</td><td>Page header and Create button, table and columns, Run button and its disabled conditions, the <span class="mono">⋮</span> trigger, and the update-permission gate on the menu.</td></tr>
+      <tr><td class="mono">TestSuites/hooks/useTestSuiteList.jsx</td><td>✓ read</td><td>The two-item menu that Duplicate joins, the four column definitions, and the full schedule badge vocabulary — ON, OFF, PAUSED.</td></tr>
+      <tr><td class="mono">TestSuites/slices/uiSlice.js</td><td>✓ read</td><td>The existing suite-name check and its in-flight flag, reused rather than rebuilt.</td></tr>
+      <tr><td class="mono">CreateSuite/SuiteStepOne.jsx</td><td>✓ read</td><td>The field-level error treatment both dialogs adopt.</td></tr>
+      <tr><td class="mono">packages/tailwind-config/_default-theme.scss</td><td>✓ read</td><td>Every colour in this report, semantic token and primitive.</td></tr>
+      <tr><td class="mono">.claude/knowledge/module-design/*</td><td>✓ read</td><td>The rule list and its order; the friction framework’s five dimensions and their numeric targets, read in full.</td></tr>
+      <tr><td>Confluence — Copy Test Suite PRD</td><td>✓ read</td><td>FR-1 to FR-7, the review round that amends them, the dialog mockup, the job frequencies, and the competitor sweep.</td></tr>
+      <tr><td class="mono">TestSuites/components/DeleteSuiteModal.jsx</td><td>~ inferred</td><td>Cited as the in-feature convention for a suite-scoped dialog. Its file was located but not read line-for-line — <b>check it before build</b> in case it, not clone-test, is the closer shell.</td></tr>
+      <tr><td>Global navigation and top bar</td><td>~ inferred</td><td><b>Not read.</b> The prototypes render the page-level shell only — header, table, rows. The surrounding product chrome is deliberately absent rather than invented, so these screens are structure-accurate at page level and say nothing about the frame around them.</td></tr>
+      <tr><td>Suite-duplicate endpoint · paused schedule state</td><td>~ inferred</td><td><b>Neither exists.</b> Assumed by decision at intake. Every screen that depends on them is therefore drawn against a contract nobody has written yet.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+
+<script>
+(function(){
+  /* ── TOC ── */
+  var toc=document.getElementById('toc');
+  document.querySelectorAll('section.blk[id], .vsec[id]').forEach(function(s){
+    var h=s.querySelector('h2'); if(!h) return;
+    var a=document.createElement('a');
+    a.href='#'+s.id;
+    a.textContent=h.textContent.trim().replace(/\s+/g,' ').slice(0,46);
+    if(s.classList.contains('vsec')) a.className='l2';
+    toc.appendChild(a);
+  });
+
+  /* ── per-variation prototype navigation ── */
+  var order={A:['A1','A2','A3','A4','A5','A6','A7','A8'],
+             B:['B1','B2','B3','B4','B5','B6','B7','B8','B9'],
+             C:['C1','C2','C3','C4','C5','C6','C7']};
+  var at={A:0,B:0,C:0};
+
+  function show(v,id){
+    var list=order[v]; var i=list.indexOf(id); if(i<0) return;
+    at[v]=i;
+    list.forEach(function(sid){
+      var el=document.getElementById(sid);
+      if(el) el.classList.toggle('on',sid===id);
+    });
+    var rail=document.querySelector('[data-rail="'+v+'"]');
+    if(rail) rail.querySelectorAll('button').forEach(function(b){
+      b.setAttribute('aria-current', b.getAttribute('data-go')===id ? 'true':'false');
+    });
+  }
+  function step(v,d){ var l=order[v]; show(v,l[Math.min(l.length-1,Math.max(0,at[v]+d))]); }
+
+  document.addEventListener('click',function(e){
+    var go=e.target.closest('[data-go]');
+    if(go){ show(go.getAttribute('data-go').charAt(0), go.getAttribute('data-go')); return; }
+    var adv=e.target.closest('[data-advance]');
+    if(adv){ var t=adv.getAttribute('data-advance'); show(t.charAt(0),t); return; }
+    var n=e.target.closest('[data-next]'); if(n){ step(n.getAttribute('data-next'),1); return; }
+    var p=e.target.closest('[data-prev]'); if(p){ step(p.getAttribute('data-prev'),-1); return; }
+    var f=e.target.closest('[data-fs]');
+    if(f){
+      var panel=document.getElementById(f.getAttribute('data-fs'));
+      var on=panel.classList.toggle('fs');
+      f.textContent=on?'✕ Exit':'⤢ Fullscreen';
+      document.body.style.overflow=on?'hidden':'';
+      return;
+    }
+  });
+
+  /* ← → drive whichever panel is fullscreen, else the one nearest the viewport centre */
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight'&&e.key!=='Escape') return;
+    var fs=document.querySelector('.proto.fs');
+    if(e.key==='Escape'){
+      if(fs){ fs.classList.remove('fs'); document.body.style.overflow='';
+        var b=fs.querySelector('[data-fs]'); if(b) b.textContent='⤢ Fullscreen'; }
+      return;
+    }
+    var v;
+    if(fs){ v=fs.id.split('-')[1]; }
+    else{
+      var best=null,bd=1e9,mid=window.innerHeight/2;
+      document.querySelectorAll('.proto').forEach(function(p){
+        var r=p.getBoundingClientRect();
+        if(r.bottom<0||r.top>window.innerHeight) return;
+        var d=Math.abs((r.top+r.bottom)/2-mid);
+        if(d<bd){bd=d;best=p;}
+      });
+      if(!best) return; v=best.id.split('-')[1];
+    }
+    step(v, e.key==='ArrowRight'?1:-1);
+  });
+})();
+</script>
+</body>
+</html>
