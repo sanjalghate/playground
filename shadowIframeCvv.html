@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Funds - Shadow DOM > cross-origin iframe CVV</title>
+  <!-- Repro for LCNC-20384: dialog > vault-iframe (shadow root) > cross-origin iframe > #cvv2 -->
+  <style>
+    :root { --navy: #14295e; --bg: #f4f6fa; --line: #d6dbe6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: #1d2433; }
+    header { background: #fff; display: flex; align-items: center; gap: 32px; padding: 14px 40px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .logo { font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+    nav a { margin-right: 24px; color: #333; text-decoration: none; font-size: 15px; }
+    .acct { margin-left: auto; background: #e3e6ec; padding: 12px 40px; border-radius: 4px; font-size: 14px; }
+    .wrap { display: flex; gap: 40px; padding: 24px 40px; }
+    aside { width: 240px; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    aside h4 { font-size: 11px; color: #777; letter-spacing: 1px; margin: 20px 0 8px; }
+    aside a { display: block; padding: 8px 0; color: #222; text-decoration: none; font-size: 14px; }
+    main { flex: 1; }
+    .crumbs { font-size: 13px; color: #555; }
+    .crumbs a { color: #555; }
+    h1 { font-size: 22px; margin: 16px 0 20px; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 20px; display: flex; gap: 40px; flex-wrap: wrap; }
+    .pm { border: 2px solid var(--navy); border-radius: 4px; padding: 0 0 12px; width: 220px; }
+    .pm .tag { background: var(--navy); color: #fff; font-size: 11px; padding: 3px 8px; display: inline-block; }
+    .pm div { padding: 6px 12px 0; font-size: 13px; }
+    .amounts button { border: 2px solid var(--navy); background: #fff; color: var(--navy); border-radius: 20px; padding: 8px 26px; margin-right: 8px; font-weight: 600; cursor: pointer; }
+    .amounts button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+    .primary { background: var(--navy); color: #fff; border: 0; border-radius: 20px; padding: 10px 40px; font-weight: 600; cursor: pointer; margin-top: 24px; }
+    #result { margin-top: 16px; font-weight: 600; }
+    dialog { border: 0; border-radius: 6px; padding: 24px 48px 28px; width: 440px; max-width: 95vw; text-align: center; }
+    dialog::backdrop { background: rgba(20,41,94,.55); }
+    .x { position: absolute; top: 14px; right: 16px; background: none; border: 0; font-size: 24px; cursor: pointer; }
+    dialog h2 { font-weight: 500; margin: 8px 0 24px; }
+    vault-iframe { display: block; }
+    .confirm { background: #111; color: #fff; border: 0; border-radius: 20px; padding: 10px 40px; font-weight: 700; margin-top: 18px; cursor: pointer; }
+    .err { color: #b00020; font-size: 13px; min-height: 18px; margin-top: 8px; }
+    #control { margin-top: 24px; background: #fff; border: 1px dashed #999; padding: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo">KANSAS LOTTERY</span>
+    <nav><a href="#">Games</a><a href="#">PlayOn Loyalty</a><a href="#">News &amp; Winners</a><a href="#">About Us</a></nav>
+    <span class="acct">account details hidden</span>
+  </header>
+
+  <div class="wrap">
+    <aside>
+      <a href="index.html">&larr; Playground</a>
+      <a href="#">My Account</a>
+      <h4>WALLET</h4>
+      <a href="#">Add Funds</a><a href="#">Withdraw Wins</a><a href="#">Payment Methods</a>
+      <h4>MY ACTIVITY</h4>
+      <a href="#">My Bonuses</a><a href="#">Transaction History</a>
+    </aside>
+
+    <main>
+      <div class="crumbs"><a href="#">My Account</a> &rsaquo; Add Funds</div>
+      <h1>Add Funds</h1>
+      <div class="panel">
+        <div>
+          <h3>Your Payment Method</h3>
+          <div class="pm"><span class="tag">SELECTED</span><div>&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;</div><div>Exp. Date: 11/30</div></div>
+        </div>
+        <div>
+          <h3>Add Funds</h3>
+          <div class="amounts" role="group" aria-label="Amount">
+            <button type="button" data-amount="25" aria-pressed="false">$25</button>
+            <button type="button" data-amount="40" aria-pressed="true">$40</button>
+            <button type="button" data-amount="50" aria-pressed="false">$50</button>
+          </div>
+          <button id="add-funds" class="primary" type="button">Add $40</button>
+          <div id="result" data-test-id="deposit-result">Balance: $0.00</div>
+        </div>
+      </div>
+
+      <!-- ?control=1: same vault in a plain top-level iframe (no shadow root). Should work on every build. -->
+      <section id="control">
+        <h3>Control: plain iframe (no shadow root)</h3>
+        <iframe id="control-iframe" title="Control Widget" width="360" height="150" style="border:0"></iframe><br>
+        <button id="control-confirm" class="confirm" type="button">Confirm control</button>
+        <div id="control-result" data-test-id="control-result"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="cvv-dialog" aria-labelledby="cvv-heading">
+    <button class="x" type="button" aria-label="Close" id="close-dialog">&times;</button>
+    <h2 id="cvv-heading">Add CVV</h2>
+    <vault-iframe is-cvv-widget></vault-iframe>
+    <div class="err" id="cvv-error" role="alert"></div>
+    <button id="confirm" class="confirm" type="button">Confirm</button>
+    <p>Adding Funds: <span id="adding">$40.00</span></p>
+  </dialog>
+
+  <script>
+    // Vault (CVV widget) document. Field mirrors the recorded one: id="cvv2", data-test-id="cvv-input", no name.
+    const VAULT_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Payment Method Vault</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; color: #1d2433; }
+  .card { border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.12); overflow: hidden; }
+  .card-top { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .dots { letter-spacing: 3px; color: #888; font-size: 14px; }
+  .exp { font-size: 13px; margin-top: 8px; }
+  .visa { font-weight: 900; font-style: italic; color: #1a1f71; font-size: 22px; }
+  .cvv-row { border-top: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: center; }
+  input { width: 110px; padding: 10px 12px; font-size: 15px; border: 1px solid #555; border-radius: 3px; }
+</style></head>
+<body>
+  <div class="card">
+    <div class="card-top">
+      <div><div class="dots">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;</div><div class="exp">Exp. Date: 11/30</div></div>
+      <div class="visa">VISA</div>
+    </div>
+    <div class="cvv-row">
+      <input id="cvv2" data-test-id="cvv-input" type="text" inputmode="numeric" maxlength="4" autocomplete="cc-csc" placeholder="CVV" aria-label="CVV">
+    </div>
+  </div>
+  <script>
+    // Parent asks for the CVV on Confirm (tokenization-style); the parent never reads this DOM.
+    window.addEventListener('message', function (e) {
+      if (e.source !== window.parent || !e.data || e.data.type !== 'vault-submit') return;
+      window.parent.postMessage({ type: 'vault-cvv', cvv: document.getElementById('cvv2').value }, '*');
+    });
+  </` + `script>
+</body></html>`;
+
+    // Options: ?vault=<url> (real http cross-origin vault) | ?shadow=closed | ?delay=<ms> | ?control=1
+    const params = new URLSearchParams(location.search);
+    const VAULT_URL = params.get('vault');
+    const SHADOW_MODE = params.get('shadow') === 'closed' ? 'closed' : 'open';
+    const IFRAME_DELAY = Number(params.get('delay') || 0);
+
+    // Default: sandboxed srcdoc without allow-same-origin = opaque origin, i.e. cross-origin to
+    // this page on a single host (GitHub Pages). With ?vault=<url> it is a real http iframe.
+    function makeVaultIframe(title) {
+      const iframe = document.createElement('iframe');
+      iframe.title = title;
+      iframe.style.cssText = 'border:0;width:100%;height:150px;';
+      if (VAULT_URL) {
+        iframe.src = VAULT_URL;
+      } else {
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms');
+        iframe.srcdoc = VAULT_HTML;
+      }
+      return iframe;
+    }
+
+    let vaultFrame = null;
+    class VaultIframe extends HTMLElement {
+      connectedCallback() {
+        if (this._root) return;
+        this._root = this.attachShadow({ mode: SHADOW_MODE });
+        this._root.innerHTML = '<div class="vault-wrapper"></div>';
+        const add = () => {
+          vaultFrame = makeVaultIframe('Iframe Widget');
+          this._root.querySelector('.vault-wrapper').appendChild(vaultFrame);
+        };
+        IFRAME_DELAY ? setTimeout(add, IFRAME_DELAY) : add();
+      }
+    }
+    customElements.define('vault-iframe', VaultIframe);
+
+    let amount = 40;
+    let balance = 0;
+    const addBtn = document.getElementById('add-funds');
+    document.querySelectorAll('.amounts button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('.amounts button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      amount = Number(b.dataset.amount);
+      addBtn.textContent = `Add $${amount}`;
+    }));
+
+    const dialog = document.getElementById('cvv-dialog');
+    addBtn.addEventListener('click', () => {
+      document.getElementById('adding').textContent = `$${amount.toFixed(2)}`;
+      document.getElementById('cvv-error').textContent = '';
+      dialog.showModal();
+    });
+    document.getElementById('close-dialog').addEventListener('click', () => dialog.close());
+    // Confirm asks the vault for the CVV; the result comes back via postMessage.
+    document.getElementById('confirm').addEventListener('click', () => {
+      if (vaultFrame) vaultFrame.contentWindow.postMessage({ type: 'vault-submit' }, '*');
+    });
+
+    if (params.get('control') === '1') {
+      document.getElementById('control').style.display = 'block';
+      const ctl = makeVaultIframe('Control Widget');
+      ctl.id = 'control-iframe';
+      document.getElementById('control-iframe').replaceWith(ctl);
+    }
+    document.getElementById('control-confirm').addEventListener('click', () => {
+      document.getElementById('control-iframe').contentWindow.postMessage({ type: 'vault-submit' }, '*');
+    });
+
+    // Match replies by source window; works for both opaque and http origins.
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.type !== 'vault-cvv') return;
+      const valid = /^\d{3,4}$/.test(e.data.cvv);
+      if (vaultFrame && e.source === vaultFrame.contentWindow) {
+        if (!valid) { document.getElementById('cvv-error').textContent = 'Enter a valid CVV'; return; }
+        balance += amount;
+        document.getElementById('result').textContent =
+          `Balance: $${balance.toFixed(2)} (added $${amount.toFixed(2)} with CVV ${e.data.cvv})`;
+        dialog.close();
+      } else if (e.source === document.getElementById('control-iframe').contentWindow) {
+        document.getElementById('control-result').textContent = valid ? `Control CVV ${e.data.cvv}` : 'Control: invalid CVV';
+      }
+    });
+  </script>
+</body>
+</html>
