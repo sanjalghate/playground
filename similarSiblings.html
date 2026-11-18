@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Similar Siblings</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; background: #fff; color: #222; }
+  section { border: 1px solid #ccc; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  p.note { font-size: 13px; color: #555; margin: 0 0 8px; }
+  button { margin: 4px; padding: 6px 12px; }
+  #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #f5f5f5; padding: 8px; min-height: 40px; }
+</style>
+</head>
+<body>
+<h1>Similar Siblings (LCNC-22866)</h1>
+
+<section id="sec-main">
+  <h2>1. Loop target: 4 similar buttons</h2>
+  <p class="note">Record a click on "Main 1" and make it a "For each element" loop (4 similar). Each button has its own id, data-index and aria-label, so Configure attributes can narrow the set to 1 or 0.</p>
+  <div id="main-group">
+    <button class="main-btn" id="main-1" data-index="1" aria-label="Main one">Main 1</button>
+    <button class="main-btn" id="main-2" data-index="2" aria-label="Main two">Main 2</button>
+    <button class="main-btn" id="main-3" data-index="3" aria-label="Main three">Main 3</button>
+    <button class="main-btn" id="main-4" data-index="4" aria-label="Main four">Main 4</button>
+  </div>
+</section>
+
+<section id="sec-other">
+  <h2>2. Different set: 3 other buttons</h2>
+  <p class="note">For Override default locator: set the loop step XPath to <code>//button[@class="other-btn"]</code> (3 different elements). If the run still logs main-1..4, the override is ignored.</p>
+  <div id="other-group">
+    <button class="other-btn" id="other-1" data-index="1">Other 1</button>
+    <button class="other-btn" id="other-2" data-index="2">Other 2</button>
+    <button class="other-btn" id="other-3" data-index="3">Other 3</button>
+  </div>
+</section>
+
+<section>
+  <h2>3. Zero-match XPath</h2>
+  <p class="note">No element on this page has class "ghost-btn". Override the loop step XPath to <code>//button[@class="ghost-btn"]</code> (0 matches). Expected: 0 iterations.</p>
+</section>
+
+<section>
+  <h2>Click log</h2>
+  <button id="clear-log">Clear log</button>
+  <div id="log"></div>
+</section>
+
+<script>
+  const logEl = document.getElementById('log');
+  const log = (msg) => { logEl.textContent += `${new Date().toLocaleTimeString()}  ${msg}\n`; };
+  document.querySelectorAll('.main-btn, .other-btn').forEach((b) => b.addEventListener('click', () => log(`clicked ${b.id}`)));
+  document.getElementById('clear-log').addEventListener('click', () => { logEl.textContent = ''; });
+</script>
+</body>
+</html>

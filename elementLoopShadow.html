@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Loop Shadow Harness</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; background: #fff; color: #222; }
+  section { border: 1px solid #ccc; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  p.note { font-size: 13px; color: #555; margin: 0 0 8px; }
+  button { margin: 4px; padding: 6px 12px; }
+  #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #f5f5f5; padding: 8px; min-height: 40px; }
+</style>
+</head>
+<body>
+<h1>Element Loop Shadow Harness (LCNC-22868)</h1>
+
+<section id="sec-main">
+  <h2>1. Main document (control)</h2>
+  <p class="note">4 buttons, no shadow DOM. Loop should run 4 iterations.</p>
+  <button class="main-btn" data-label="main-1">Main 1</button>
+  <button class="main-btn" data-label="main-2">Main 2</button>
+  <button class="main-btn" data-label="main-3">Main 3</button>
+  <button class="main-btn" data-label="main-4">Main 4</button>
+</section>
+
+<section id="sec-sh1">
+  <h2>2. Single-level shadow root (#sh1)</h2>
+  <p class="note">#sh1 → open shadow root → 3 .sh-btn.</p>
+  <div id="sh1"></div>
+</section>
+
+<section id="sec-sh2">
+  <h2>3. Nested shadow root (#sh2) — the reported hang</h2>
+  <p class="note">#sh2 → open shadow root → div → open shadow root → 3 .nsh-btn.</p>
+  <div id="sh2"></div>
+</section>
+
+<section id="sec-missing">
+  <h2>4. Isolation check: element that disappears (no shadow DOM)</h2>
+  <p class="note">Record the loop on these 3 buttons, then click "Remove buttons" before running. If the run hangs here too, the bug is the executor timeout/Stop path, not shadow DOM.</p>
+  <div id="missing-wrap">
+    <button class="gone-btn" data-label="gone-1">Gone 1</button>
+    <button class="gone-btn" data-label="gone-2">Gone 2</button>
+    <button class="gone-btn" data-label="gone-3">Gone 3</button>
+  </div>
+  <button id="remove-btns">Remove buttons</button>
+  <button id="restore-btns">Restore buttons</button>
+</section>
+
+<section>
+  <h2>Click log</h2>
+  <button id="clear-log">Clear log</button>
+  <div id="log"></div>
+</section>
+
+<script>
+  const logEl = document.getElementById('log');
+  const log = (label) => { logEl.textContent += `${new Date().toLocaleTimeString()}  ${label}\n`; };
+  const bindLog = (root, selector) =>
+    root.querySelectorAll(selector).forEach((b) => b.addEventListener('click', () => log(b.dataset.label)));
+
+  const makeButtons = (root, cls, prefix, count) => {
+    for (let i = 1; i <= count; i++) {
+      const b = document.createElement('button');
+      b.className = cls;
+      b.dataset.label = `${prefix}-${i}`;
+      b.textContent = `${prefix} ${i}`;
+      root.appendChild(b);
+    }
+  };
+
+  bindLog(document, '.main-btn');
+
+  const sh1Root = document.getElementById('sh1').attachShadow({ mode: 'open' });
+  makeButtons(sh1Root, 'sh-btn', 'Shadow', 3);
+  bindLog(sh1Root, '.sh-btn');
+
+  const sh2Root = document.getElementById('sh2').attachShadow({ mode: 'open' });
+  const inner = document.createElement('div');
+  inner.id = 'sh2-inner';
+  sh2Root.appendChild(inner);
+  const innerRoot = inner.attachShadow({ mode: 'open' });
+  makeButtons(innerRoot, 'nsh-btn', 'Nested', 3);
+  bindLog(innerRoot, '.nsh-btn');
+
+  const wrap = document.getElementById('missing-wrap');
+  const goneHtml = wrap.innerHTML;
+  bindLog(document, '.gone-btn');
+  document.getElementById('remove-btns').addEventListener('click', () => { wrap.innerHTML = ''; log('removed gone-btn'); });
+  document.getElementById('restore-btns').addEventListener('click', () => {
+    wrap.innerHTML = goneHtml;
+    bindLog(wrap, '.gone-btn');
+    log('restored gone-btn');
+  });
+  document.getElementById('clear-log').addEventListener('click', () => { logEl.textContent = ''; });
+</script>
+</body>
+</html>

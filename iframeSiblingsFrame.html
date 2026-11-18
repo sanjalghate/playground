@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iframe Buttons</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 12px; background: #fff; color: #222; }
+  button { margin: 4px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<p>Inside iframe #f1: 3 similar buttons</p>
+<button class="f1-btn" data-label="f1-1">Frame 1</button>
+<button class="f1-btn" data-label="f1-2">Frame 2</button>
+<button class="f1-btn" data-label="f1-3">Frame 3</button>
+<script>
+  document.querySelectorAll('.f1-btn').forEach((b) => b.addEventListener('click', () => {
+    try { window.parent.logClick(`clicked ${b.dataset.label} (in iframe)`); } catch (e) { /* parent not same-origin */ }
+  }));
+</script>
+</body>
+</html>
