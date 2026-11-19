@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Many Buttons</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; background: #fff; color: #222; }
+  #grid { display: flex; flex-wrap: wrap; gap: 6px; max-width: 900px; }
+  .many-btn { padding: 6px 10px; }
+  #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #f5f5f5; padding: 8px; margin-top: 16px; min-height: 40px; max-height: 300px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>Many Buttons (LCNC-22869)</h1>
+<p>35 similar buttons. A "For each element" loop should show "Loop will run only on first 30 elements".</p>
+<div id="grid"></div>
+<p><button id="clear-log">Clear log</button> <span id="count"></span></p>
+<div id="log"></div>
+<script>
+  const grid = document.getElementById('grid');
+  const logEl = document.getElementById('log');
+  const countEl = document.getElementById('count');
+  let clicks = 0;
+  for (let i = 1; i <= 35; i++) {
+    const b = document.createElement('button');
+    b.className = 'many-btn';
+    b.textContent = `Item ${i}`;
+    b.addEventListener('click', () => {
+      clicks += 1;
+      countEl.textContent = `clicks: ${clicks}`;
+      logEl.textContent += `clicked item-${i}\n`;
+    });
+    grid.appendChild(b);
+  }
+  document.getElementById('clear-log').addEventListener('click', () => {
+    logEl.textContent = '';
+    clicks = 0;
+    countEl.textContent = '';
+  });
+</script>
+</body>
+</html>
